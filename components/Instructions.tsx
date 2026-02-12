@@ -90,12 +90,12 @@ const Instructions: React.FC = () => {
                   <Database size={32} className="mr-4 text-blue-400" /> Control Plane (Data & Setup)
                </h2>
                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <StepCard num="1" title="Clonar Setup Repositor">
+                  <StepCard num="1" title="Clonar Setup Repositorio">
                      <CodeBlock 
                         title="Repository Checkout"
                         icon={GitBranch}
-                        code={`git clone https://github.com/cuberbox/cluster-setup.git
-cd cluster-setup/scripts
+                        code={`git clone https://github.com/cuberbox/cuberbox-pro-setup.git
+cd cuberbox-pro-setup/scripts
 
 # Dar permisos al instalador de Debian 12/13
 chmod +x full-stack-install.sh`}
@@ -136,8 +136,8 @@ apt update && apt install -y freeswitch-all freeswitch-mod-lua`}
                <CodeBlock 
                   title="Dialplan Sync"
                   icon={GitMerge}
-                  code={`git clone https://github.com/cuberbox/pro-core.git
-cp pro-core/setup/dialplan.xml /etc/freeswitch/dialplan/default/cuberbox.xml
+                  code={`git clone https://github.com/cuberbox/cuberbox-pro-core.git
+cp cuberbox-pro-core/setup/dialplan.xml /etc/freeswitch/dialplan/default/cuberbox.xml
 fs_cli -x "reloadxml"`}
                />
             </StepCard>
@@ -154,8 +154,8 @@ fs_cli -x "reloadxml"`}
                   <CodeBlock 
                     title="Source Checkout"
                     icon={Github}
-                    code={`git clone https://github.com/cuberbox/neural-bridge.git
-cd neural-bridge
+                    code={`git clone https://github.com/cuberbox/cuberbox-pro-neural.git
+cd cuberbox-pro-neural
 go mod tidy
 go build -o /usr/local/bin/cuberbox-engine main.go`}
                   />

@@ -36,7 +36,7 @@ const MANUAL_DATABASE: ManualEntry[] = [
     category: 'ADMINISTRACIÓN',
     summary: 'Definición exhaustiva del sistema RBAC (Role-Based Access Control) que gobierna las capacidades operativas del personal en CUBERBOX ELITE.',
     steps: [
-      { title: 'Nivel 1-3: Agente Operativo', desc: 'Acceso restringido a la Estación de Agente. Capacidad de recibir llamadas, realizar marcación manual, tipificar y gestionar el CRM interno. Repositorio UI: https://github.com/cuberbox/frontend-elite' },
+      { title: 'Nivel 1-3: Agente Operativo', desc: 'Acceso restringido a la Estación de Agente. Capacidad de recibir llamadas, realizar marcación manual, tipificar y gestionar el CRM interno. Repositorio UI: https://github.com/cuberbox/cuberbox-pro-ui' },
       { title: 'Nivel 4-6: Supervisor GTR', desc: 'Acceso al Command Center y Monitor Real-time. Habilitado para Listen (escucha silenciosa) y Whisper (susurro al agente). Puede gestionar estados de pausa y descargar reportes.' },
       { title: 'Nivel 7-8: Campaign Manager', desc: 'Control estratégico del Dialer Engine. Capacidad para crear campañas, importar bases de datos, ajustar Hopper, configurar IVRs y entrenar modelos en el AI Studio.' },
       { title: 'Nivel 9: Administrador Root', desc: 'Autoridad máxima de infraestructura. Único capaz de gestionar SIP Trunks, Nodos del Clúster, API Keys globales y purga de logs forenses.' }
@@ -53,7 +53,7 @@ const MANUAL_DATABASE: ManualEntry[] = [
     category: 'INSTALACIÓN',
     summary: 'Guía de despliegue para el stack tecnológico de CUBERBOX PRO en entornos Linux Debian.',
     steps: [
-      { title: 'Clonar Repositorio de Setup', desc: 'Obtenga las herramientas de automatización para el despliegue del clúster.', code: 'git clone https://github.com/cuberbox/cluster-setup.git\ncd cluster-setup' },
+      { title: 'Clonar Repositorio de Setup', desc: 'Obtenga las herramientas de automatización para el despliegue del clúster.', code: 'git clone https://github.com/cuberbox/cuberbox-pro-setup.git\ncd cuberbox-pro-setup' },
       { title: 'Configuración de Nodos', desc: 'Edite el inventario de nodos SIP y de base de datos en el archivo de configuración.', code: 'nano inventory.ini\n# Definir nodos FS y DB' },
       { title: 'Despliegue Automatizado', desc: 'Ejecute el script maestro para instalar FreeSwitch, PostgreSQL y el Neural Bridge.', code: 'sudo ./deploy-stack.sh --env=production' }
     ],
@@ -66,7 +66,7 @@ const MANUAL_DATABASE: ManualEntry[] = [
     category: 'INSTALACIÓN',
     summary: 'Instalación del puente Go que conecta los eventos SIP con los modelos Gemini Pro de Google.',
     steps: [
-      { title: 'Dependencias de Go', desc: 'Requiere Go 1.22+. Descargue el código fuente del puente neuronal.', code: 'git clone https://github.com/cuberbox/neural-bridge.git\ncd neural-bridge' },
+      { title: 'Dependencias de Go', desc: 'Requiere Go 1.22+. Descargue el código fuente del puente neuronal.', code: 'git clone https://github.com/cuberbox/cuberbox-pro-neural.git\ncd cuberbox-pro-neural' },
       { title: 'Build del Binario', desc: 'Compile el ejecutable optimizado para su arquitectura.', code: 'go mod tidy\ngo build -o cuberbox-engine main.go' },
       { title: 'Persistencia SystemD', desc: 'Configure el motor como un daemon de sistema para garantizar 99.9% uptime.', code: 'cp cuberbox-engine.service /etc/systemd/system/\nsystemctl enable --now cuberbox-engine' }
     ],
@@ -225,7 +225,7 @@ const UserManual: React.FC = () => {
                    </h3>
                    <div className="space-y-8">
                       {selectedEntry.steps.map((step, i) => (
-                        <div key={i} className="group flex flex-col space-y-6 p-10 bg-slate-900/40 border border-slate-800 rounded-[48px] hover:border-blue-500/30 transition-all shadow-inner relative overflow-hidden">
+                        <div key={i} className="group flex flex-col space-y-6 p-10 bg-slate-900/40 border border-slate-800 rounded-[48px] hover:border-blue-500/30 transition-all shadow-inner relative overflow-hidden flex flex-col">
                            <div className="flex items-start space-x-8">
                               <div className="w-12 h-12 rounded-full bg-slate-950 border-2 border-slate-800 flex items-center justify-center font-black text-xs text-blue-500 shrink-0 shadow-lg">{i+1}</div>
                               <div className="flex-1 space-y-4">
@@ -255,11 +255,11 @@ const UserManual: React.FC = () => {
                         <Github size={16} className="mr-3 text-emerald-500" /> Repositorios de Referencia
                       </h3>
                       <div className="p-6 bg-slate-950 rounded-[32px] border border-slate-800 space-y-4">
-                         <a href="https://github.com/cuberbox/neural-bridge" target="_blank" className="flex items-center justify-between p-3 rounded-xl bg-slate-900 hover:bg-blue-600/10 transition-all border border-slate-800 group">
+                         <a href="https://github.com/cuberbox/cuberbox-pro-neural" target="_blank" className="flex items-center justify-between p-3 rounded-xl bg-slate-900 hover:bg-blue-600/10 transition-all border border-slate-800 group">
                             <span className="text-[10px] font-black text-slate-300 uppercase">Neural Bridge (Go)</span>
                             <ArrowUpRight size={14} className="text-blue-400" />
                          </a>
-                         <a href="https://github.com/cuberbox/cluster-setup" target="_blank" className="flex items-center justify-between p-3 rounded-xl bg-slate-900 hover:bg-blue-600/10 transition-all border border-slate-800 group">
+                         <a href="https://github.com/cuberbox/cuberbox-pro-setup" target="_blank" className="flex items-center justify-between p-3 rounded-xl bg-slate-900 hover:bg-blue-600/10 transition-all border border-slate-800 group">
                             <span className="text-[10px] font-black text-slate-300 uppercase">Cluster Setup (Ansible)</span>
                             <ArrowUpRight size={14} className="text-blue-400" />
                          </a>

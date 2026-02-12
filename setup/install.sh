@@ -43,6 +43,8 @@ apt update && apt install -y postgresql-16
 
 # 4. Compilación del Neural Bridge (Go Orquestrator)
 echo -e "${YELLOW}Compilando CUBERBOX Neural Orquestrator (Control Plane)...${NC}"
+# El repositorio ahora es cuberbox-pro-neural
+git clone https://github.com/cuberbox/cuberbox-pro-neural.git /opt/cuberbox/backend
 mkdir -p /opt/cuberbox/bin
 cd /opt/cuberbox/backend
 go mod tidy
@@ -58,7 +60,8 @@ apt install -y freeswitch-all freeswitch-mod-rtc freeswitch-mod-v8 freeswitch-mo
 
 # 6. Despliegue de Lógica Lua y Hooks
 echo -e "${YELLOW}Inyectando hooks de telemetría en el dialplan...${NC}"
-cp /opt/cuberbox/setup/cuberbox_router.lua /usr/share/freeswitch/scripts/
+# Asumiendo que el archivo está en el repositorio backend o core
+cp /opt/cuberbox/backend/setup/cuberbox_router.lua /usr/share/freeswitch/scripts/
 chown freeswitch:freeswitch /usr/share/freeswitch/scripts/cuberbox_router.lua
 
 # 7. Configuración de Servicio SystemD para Go Bridge
@@ -96,7 +99,8 @@ ufw --force enable
 echo -e "${YELLOW}Inyectando esquema de base de datos...${NC}"
 sudo -u postgres psql -c "CREATE USER cuber_master WITH PASSWORD 'CB_Secret_2025';" || true
 sudo -u postgres psql -c "CREATE DATABASE cuberbox_pro OWNER cuber_master;" || true
-sudo -u postgres psql cuberbox_pro < /opt/cuberbox/setup/schema.sql
+# El esquema ahora se obtiene de cuberbox-pro-core o similar
+sudo -u postgres psql cuberbox_pro < /opt/cuberbox/backend/setup/schema.sql
 
 # 10. Finalización
 systemctl daemon-reload
