@@ -1,0 +1,55 @@
+
+<!-- CUBERBOX Pro - Strategic Real-Time Dialplan -->
+<include>
+  <context name="default">
+    
+    <!-- Configuración Global de Trazabilidad -->
+    <extension name="global_vars" continue="true">
+      <condition field="destination_number" expression="^.*$">
+        <set data="cuberbox_node=fs-node-01"/>
+        <set data="cuberbox_trace_id=${uuid_generate()}"/>
+        <export data="nolocal:cuberbox_trace_id=${cuberbox_trace_id}"/>
+        <log level="info" message="[CUBERBOX TRACE] New Channel Detected: ${cuberbox_trace_id}"/>
+      </condition>
+    </extension>
+
+    <!-- Conferencia Permanente del Agente (Ancla SIP) -->
+    <extension name="agent_permanent_bridge">
+      <condition field="destination_number" expression="^8600(\d{4})$">
+        <answer/>
+        <!-- Flags de Seguridad: Silencio al entrar, grabación obligatoria, moderador automático -->
+        <set data="conference_member_flags=wait-mod|mute-member|waste-energy"/>
+        <set data="agent_id=$1"/>
+        <set data="cuberbox_app=PERMANENT_BRIDGE"/>
+        <log level="notice" message="INICIANDO PUENTE PERMANENTE PARA AGENTE ${agent_id}"/>
+        <!-- Iniciar grabación de la sala completa (Forense) -->
+        <action application="set" data="api_on_answer=conference conf_$1 record /opt/cuberbox/recordings/${strftime(%Y-%m-%d)}/conf_$1.wav"/>
+        <conference data="conf_$1@default"/>
+      </condition>
+    </extension>
+
+    <!-- Inyección de Lead en la Conferencia del Agente -->
+    <extension name="outbound_dial_and_bridge">
+      <condition field="destination_number" expression="^9999(\d{4})(\d+)$">
+        <set data="target_agent=$1"/>
+        <set data="lead_number=$2"/>
+        <log level="info" message="INYECTANDO LEAD ${lead_number} EN PUENTE ${target_agent}"/>
+        <!-- Marcación al lead y al contestar, inyectarlo en la conferencia del agente -->
+        <action application="bridge" data="{ignore_early_media=true,originate_timeout=30}sofia/gateway/twilio/${lead_number},&conference(conf_${target_agent}@default)"/>
+      </condition>
+    </extension>
+
+    <!-- Supervisión Táctica (Listen/Whisper/Barge) -->
+    <extension name="supervisor_control">
+      <condition field="destination_number" expression="^77(\d)(\d{4})$">
+        <set data="control_type=$1"/> <!-- 1=Listen, 2=Whisper, 3=Barge -->
+        <set data="target_ext=$2"/>
+        <log level="notice" message="SUPERVISOR INICIANDO MODO ${control_type} SOBRE EXT ${target_ext}"/>
+        <!-- Lógica dinámica según el código de control -->
+        <action application="answer"/>
+        <action application="conference" data="conf_${target_ext}@default+flags{mute}"/>
+      </condition>
+    </extension>
+
+  </context>
+</include>

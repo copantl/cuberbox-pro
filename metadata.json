@@ -1,0 +1,9 @@
+{
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ],
+  "name": "CUBERBOX ELITE | Neural Enterprise Core",
+  "description": "La solución líder para contact centers de alto rendimiento. Orquestación SIP con IA Gemini integrada y seguridad forense SHA-256."
+}
