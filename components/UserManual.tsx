@@ -36,10 +36,10 @@ const MANUAL_DATABASE: ManualEntry[] = [
     summary: 'Procedimiento estándar recomendado para desplegar el ecosistema CUBERBOX ELITE en un nodo maestro Debian 12 o 13.',
     steps: [
       { title: 'Conexión SSH', desc: 'Acceda a su terminal como usuario Root.' },
-      { title: 'Ejecutar Instalador Maestro', desc: 'Pegue el comando unificado. El script V4.7.9 gestiona el bypass de llaves GPG de FreeSwitch automáticamente.', code: 'wget -O install.sh https://raw.githubusercontent.com/copantl/cuberbox-pro/main/setup/install.sh && chmod +x install.sh && sudo ./install.sh' },
-      { title: 'Verificación de Daemons', desc: 'El script activará cuberbox-engine y freeswitch automáticamente.' }
+      { title: 'Ejecutar Instalador Maestro', desc: 'Pegue el comando unificado. El script V4.8.0 gestiona el bypass de los repositorios 401 de SignalWire automáticamente.', code: 'wget -O install.sh https://raw.githubusercontent.com/copantl/cuberbox-pro/main/setup/install.sh && chmod +x install.sh && sudo ./install.sh' },
+      { title: 'Verificación de Daemons', desc: 'El script activará cuberbox-engine y freeswitch automáticamente usando el mirror de Sipwise.' }
     ],
-    technicalNote: 'Si SignalWire bloquea la descarga de la llave (Error 401), el script intentará la importación via keyserver.ubuntu.com.',
+    technicalNote: 'Si SignalWire bloquea la descarga, el script utiliza Sipwise Gateway (Grado Telecom) para obtener FreeSwitch 1.10.',
     compliance: 'ISO/IEC 27001: Logs de instalación protegidos vía SHA-256 en /var/log/cuberbox_install.log.'
   },
   {
@@ -253,7 +253,7 @@ const UserManual: React.FC = () => {
                          </p>
                          <div className="flex items-center space-x-2 pt-4 border-t border-slate-800">
                             <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]"></div>
-                            <span className="text-[10px] font-black text-emerald-500 uppercase">Verificado v4.6</span>
+                            <span className="text-[10px] font-black text-emerald-500 uppercase">Verificado v4.8.0</span>
                          </div>
                       </div>
                    </div>
