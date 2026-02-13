@@ -48,7 +48,7 @@ const Header: React.FC<HeaderProps> = ({ user, currentTheme, onThemeToggle, onLo
               <ShieldCheck size={18} className="text-emerald-500" />
               <div className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full animate-ping"></div>
            </div>
-           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Engine v5.2.1 (TITAN)</span>
+           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Engine v5.3.0 (PHOENIX TITAN)</span>
         </div>
       </div>
 
