@@ -1,4 +1,3 @@
-
 /**
  * @file types.ts
  * @description Esquema maestro de tipos para CUBERBOX PRO.
@@ -14,6 +13,8 @@ export type ThemeType = 'midnight' | 'light' | 'ocean' | 'obsidian' | 'forest' |
 export type ChannelType = 'WHATSAPP' | 'FACEBOOK' | 'TIKTOK' | 'INSTAGRAM' | 'EMAIL' | 'SMS';
 export type CampaignType = 'OUTBOUND' | 'INBOUND' | 'BLENDED' | 'SURVEY';
 export type AuthMethod = 'LOCAL' | 'SSO' | 'MFA_REQUIRED';
+export type NodeRole = 'MASTER' | 'MEDIA' | 'DATABASE' | 'WEB' | 'AI_BRIDGE';
+export type SyncStatus = 'IDLE' | 'SYNCING' | 'SUCCESS' | 'ERROR';
 
 // --- CLUSTER & INFRASTRUCTURE TYPES ---
 
@@ -21,12 +22,15 @@ export interface ClusterNode {
   id: string;
   name: string;
   ip: string;
-  status: 'ONLINE' | 'OFFLINE' | 'MAINTENANCE';
+  role: NodeRole;
+  status: 'ONLINE' | 'OFFLINE' | 'MAINTENANCE' | 'PROVISIONING';
   cpu: number;
   mem: number;
   channels: number;
   threads: number;
   dbLatency: number;
+  lastSync?: string;
+  sshPort?: number;
 }
 
 export interface DBNode {
@@ -192,7 +196,7 @@ export interface UserGroup {
   name: string;
   description: string;
   accessLevel: number;
-  memberIds?: string[]; // Añadido para producción
+  memberIds?: string[]; 
   permissions: {
     canRecord: boolean;
     canManualDial: boolean;

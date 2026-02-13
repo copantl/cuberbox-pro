@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
@@ -7,7 +6,7 @@ import Dashboard from './components/Dashboard';
 import AgentScreen from './components/AgentScreen';
 import Campaigns from './components/Campaigns';
 import ClusterMonitor from './components/ClusterMonitor';
-import ClusterConfig from './components/ClusterConfig';
+import ClusterProvisioning from './components/ClusterProvisioning';
 import HAConfig from './components/HAConfig';
 import WhatsAppModule from './components/WhatsAppModule';
 import EmailModule from './components/EmailModule';
@@ -136,7 +135,7 @@ const App: React.FC = () => {
                   
                   {/* Infrastructure & Security */}
                   <Route path="/cluster" element={<AccessControl userLevel={user.userLevel} minLevel={9}><ClusterMonitor /></AccessControl>} />
-                  <Route path="/cluster-provisioning" element={<AccessControl userLevel={user.userLevel} minLevel={9}><ClusterConfig /></AccessControl>} />
+                  <Route path="/cluster-provisioning" element={<AccessControl userLevel={user.userLevel} minLevel={9}><ClusterProvisioning /></AccessControl>} />
                   <Route path="/ha-config" element={<AccessControl userLevel={user.userLevel} minLevel={9}><HAConfig /></AccessControl>} />
                   <Route path="/telephony" element={<AccessControl userLevel={user.userLevel} minLevel={9}><TelephonyConfig /></AccessControl>} />
                   <Route path="/audit" element={<AccessControl userLevel={user.userLevel} minLevel={9}><SystemAudit /></AccessControl>} />
