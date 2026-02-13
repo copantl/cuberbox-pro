@@ -89,22 +89,22 @@ const Instructions: React.FC = () => {
           <div className="space-y-12">
             <div className="glass p-12 rounded-[64px] border border-blue-500/20 bg-blue-600/5 mb-16 relative overflow-hidden">
                <h2 className="text-3xl font-black text-white uppercase tracking-tight flex items-center mb-8">
-                  <Zap size={32} className="mr-4 text-blue-400 animate-pulse" /> Resilient Build 4.8.0
+                  <Zap size={32} className="mr-4 text-blue-400 animate-pulse" /> Build v4.8.1 "NEXUS"
                </h2>
                <p className="text-slate-400 text-lg mb-10 leading-relaxed max-w-2xl font-medium">
-                  Este comando utiliza el mirror público de Sipwise para evitar el error 401 de SignalWire y descarga los módulos Go sin credenciales de Git.
+                  Este comando utiliza el mirror público de Sipwise y realiza una purga de APT para evitar errores 401 de repositorios privados.
                </p>
                <CodeBlock 
-                  title="Master Setup One-Liner (Stable)"
+                  title="Master Setup One-Liner (Build 4.8.1)"
                   icon={TerminalSquare}
                   code={`wget -O install.sh https://raw.githubusercontent.com/copantl/cuberbox-pro/main/setup/install.sh && chmod +x install.sh && sudo ./install.sh`}
                />
                <div className="p-8 bg-slate-900 border border-slate-800 rounded-[36px] flex items-start space-x-6">
-                  <AlertCircle size={24} className="text-amber-500 mt-1 shrink-0" />
+                  <AlertCircle size={24} className="text-emerald-500 mt-1 shrink-0" />
                   <div>
-                    <h4 className="text-sm font-black text-white uppercase tracking-widest mb-1">Reparación de FreeSwitch</h4>
+                    <h4 className="text-sm font-black text-white uppercase tracking-widest mb-1">Reparación de 401 Confirmada</h4>
                     <p className="text-xs text-slate-500 leading-relaxed uppercase tracking-wider font-bold">
-                       El script ahora elimina las listas de paquetes obsoletas de freeswitch.org que causaban el error 401 y utiliza mirrors comunitarios de grado telecom.
+                       El script ahora elimina las llaves GPG corruptas de freeswitch.org y utiliza un llavero moderno en /usr/share/keyrings/sipwise-keyring.gpg.
                     </p>
                   </div>
                </div>
@@ -123,21 +123,21 @@ const Instructions: React.FC = () => {
                />
             </StepCard>
 
-            <StepCard num="2" title="Compilar Backend (Public Modules)">
-               <p className="text-slate-400 mb-6">Configura el entorno para usar el orquestador Go con el bridge de eventos Fiorix.</p>
+            <StepCard num="2" title="Compilar Backend (Nexus Bridge)">
+               <p className="text-slate-400 mb-6">Configura el entorno para usar el orquestador Go con el bridge de eventos v4.8.1.</p>
                <CodeBlock 
-                  title="Go Public Build"
+                  title="Go Nexus Build"
                   icon={Code}
                   code={`cd /opt/cuberbox/backend\nexport GOPROXY=https://proxy.golang.org,direct\ngo mod init github.com/copantl/cuberbox-pro/backend\ngo get github.com/fiorix/go-eventsocket/eventsocket\ngo mod tidy\ngo build -o cuberbox-engine main.go\nsudo mv cuberbox-engine /usr/local/bin/`}
                />
             </StepCard>
 
-            <StepCard num="3" title="Activar Stack de Telefonía (Mirror Public)">
-               <p className="text-slate-400 mb-6">Instala FreeSwitch usando el mirror de Sipwise para evitar el bloqueo por token.</p>
+            <StepCard num="3" title="Activar Stack SIP (Public Mirror)">
+               <p className="text-slate-400 mb-6">Instala FreeSwitch usando el mirror Sipwise para evitar el bloqueo por token de SignalWire.</p>
                <CodeBlock 
-                  title="SIP Plane Mirror"
+                  title="SIP Plane Nexus"
                   icon={Phone}
-                  code={`curl -s https://deb.sipwise.com/spce/keyring.gpg | sudo gpg --dearmor > /usr/share/keyrings/sipwise.gpg\necho "deb [signed-by=/usr/share/keyrings/sipwise.gpg] https://deb.sipwise.com/spce/mr11.1.1/ bookworm main" | sudo tee /etc/apt/sources.list.d/sipwise.list\nsudo apt-get update && sudo apt-get install -y freeswitch-all`}
+                  code={`curl -s https://deb.sipwise.com/spce/keyring.gpg | sudo gpg --dearmor -o /usr/share/keyrings/sipwise-keyring.gpg\necho "deb [signed-by=/usr/share/keyrings/sipwise-keyring.gpg] https://deb.sipwise.com/spce/mr11.1.1/ bookworm main" | sudo tee /etc/apt/sources.list.d/sipwise.list\nsudo apt-get update && sudo apt-get install -y freeswitch-all`}
                />
             </StepCard>
           </div>
@@ -184,7 +184,7 @@ const Instructions: React.FC = () => {
                 </div>
                 <h3 className="text-4xl font-black text-white uppercase tracking-tighter">Configuración Finalizada</h3>
                 <p className="text-slate-400 text-lg max-w-xl mx-auto font-medium">
-                   El clúster está activo. Abre el asistente visual para finalizar el registro de tu API KEY y SIP Trunks.
+                   El clúster Build 4.8.1 está activo. Abre el asistente visual para finalizar el registro de tu API KEY y SIP Trunks.
                 </p>
                 <button 
                   onClick={() => navigate('/setup-wizard')}
