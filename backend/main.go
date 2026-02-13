@@ -1,4 +1,3 @@
-
 package main
 
 import (
@@ -6,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/0x19/go-freeswitch-esl/esl"
+	"github.com/fiorix/go-eventsocket/eventsocket"
 )
 
 type ClusterNode struct {
@@ -18,7 +17,9 @@ type ClusterNode struct {
 
 func main() {
 	fmt.Println("CUBERBOX NEURAL ENGINE - CLUSTER MANAGER BOOTING...")
+	fmt.Println("Build Version: 4.7.8 (Stable Bridge)")
 
+	// Nodo maestro local por defecto
 	nodes := []ClusterNode{
 		{"fs-node-01", "127.0.0.1", 8021, true},
 	}
@@ -27,33 +28,48 @@ func main() {
 		go connectToNode(node)
 	}
 
+	// Mantener el servicio vivo
 	select {}
 }
 
 func connectToNode(node ClusterNode) {
-	client, err := esl.NewClient(node.Host, node.Port, "ClueCon")
-	if err != nil {
-		log.Printf("Error: %v", err)
-		return
+	addr := fmt.Sprintf("%s:%d", node.Host, node.Port)
+	log.Printf("Intentando conexión ESL con nodo %s en %s...", node.ID, addr)
+
+	// Intentar conectar con reintentos
+	for {
+		c, err := eventsocket.Dial(addr, "ClueCon")
+		if err != nil {
+			log.Printf("Falla en nodo %s: %v. Reintentando en 5s...", node.ID, err)
+			time.Sleep(5 * time.Second)
+			continue
+		}
+
+		log.Printf("Nodo %s: Conexión ESL establecida exitosamente.", node.ID)
+
+		// Suscribirse a eventos críticos
+		c.Send("event json HEARTBEAT RELOADXML CUSTOM cuberbox::telemetry")
+
+		// Loop de escucha de eventos
+		for {
+			ev, err := c.ReadEvent()
+			if err != nil {
+				log.Printf("Nodo %s: Conexión perdida (%v). Reconectando...", node.ID, err)
+				c.Close()
+				break
+			}
+
+			// Procesamiento de telemetría personalizada
+			if ev.Get("Event-Name") == "CUSTOM" && ev.Get("Event-Subclass") == "cuberbox::telemetry" {
+				action := ev.Get("Cuberbox-Action")
+				trace := ev.Get("Cuberbox-Trace-ID")
+				fmt.Printf("[NEURAL-TRACE] Action: %s | ID: %s | Source: MediaPlane\n", action, trace)
+			}
+
+			if ev.Get("Event-Name") == "RELOADXML" {
+				log.Printf("Nodo %s: Sincronización de DialPlan detectada.", node.ID)
+			}
+		}
+		time.Sleep(2 * time.Second)
 	}
-
-	// Escuchar eventos personalizados de Lua y eventos del sistema
-	client.Subscribe("CUSTOM cuberbox::telemetry")
-	client.Subscribe("HEARTBEAT")
-	client.Subscribe("RELOADXML") // Captura cuando se hace 'reloadxml' desde la app
-
-	log.Printf("Node %s: Sincronización ESL establecida.", node.ID)
-
-	client.HandleEvent("CUSTOM", func(event *esl.Event) {
-		action := event.GetHeader("Cuberbox-Action")
-		trace := event.GetHeader("Cuberbox-Trace-ID")
-		fmt.Printf("[TELEMETRY] Action: %s | Trace: %s | Source: LuaBridge\n", action, trace)
-	})
-
-	client.HandleEvent("RELOADXML", func(event *esl.Event) {
-		log.Printf("Node %s: Configuración telefónica actualizada desde la UI.", node.ID)
-		// Aquí notificaríamos al Frontend via WebSockets
-	})
-
-	client.Loop()
 }

@@ -89,22 +89,22 @@ const Instructions: React.FC = () => {
           <div className="space-y-12">
             <div className="glass p-12 rounded-[64px] border border-blue-500/20 bg-blue-600/5 mb-16 relative overflow-hidden">
                <h2 className="text-3xl font-black text-white uppercase tracking-tight flex items-center mb-8">
-                  <Zap size={32} className="mr-4 text-blue-400 animate-pulse" /> Zero-Touch Installation
+                  <Zap size={32} className="mr-4 text-blue-400 animate-pulse" /> Resilient Build 4.7.8
                </h2>
                <p className="text-slate-400 text-lg mb-10 leading-relaxed max-w-2xl font-medium">
-                  Este comando descarga el script maestro V4.7.5 que soluciona los errores de autenticación de Git y dependencias de Go automáticamente.
+                  Este instalador ha sido actualizado para usar módulos públicos de Go, eliminando errores de autenticación de repositorios inexistentes.
                </p>
                <CodeBlock 
-                  title="Master Setup One-Liner (Stable)"
+                  title="Master Setup One-Liner (Public Repo)"
                   icon={TerminalSquare}
                   code={`wget -O install.sh https://raw.githubusercontent.com/copantl/cuberbox-pro/main/setup/install.sh && chmod +x install.sh && sudo ./install.sh`}
                />
                <div className="p-8 bg-slate-900 border border-slate-800 rounded-[36px] flex items-start space-x-6">
-                  <AlertCircle size={24} className="text-amber-500 mt-1 shrink-0" />
+                  <AlertCircle size={24} className="text-emerald-500 mt-1 shrink-0" />
                   <div>
-                    <h4 className="text-sm font-black text-white uppercase tracking-widest mb-1">Reparación de Go Modules</h4>
+                    <h4 className="text-sm font-black text-white uppercase tracking-widest mb-1">Fix: fiorix/go-eventsocket</h4>
                     <p className="text-xs text-slate-500 leading-relaxed uppercase tracking-wider font-bold">
-                       El script ahora fuerza el uso de GOPROXY, eliminando el error de "could not read Username" al descargar dependencias SIP de GitHub.
+                       El orquestador ahora utiliza la biblioteca pública de Fiorix para garantizar el despliegue sin credenciales interactivas.
                     </p>
                   </div>
                </div>
@@ -123,12 +123,12 @@ const Instructions: React.FC = () => {
                />
             </StepCard>
 
-            <StepCard num="2" title="Compilar Backend (Anti-Auth Fix)">
-               <p className="text-slate-400 mb-6">Configura el entorno para evitar bloqueos de terminal en Git.</p>
+            <StepCard num="2" title="Compilar Backend (Public Dependency)">
+               <p className="text-slate-400 mb-6">Configura el entorno para usar el proxy de Go y descarga el bridge de eventos oficial.</p>
                <CodeBlock 
-                  title="Go Resilient Build"
+                  title="Go Public Build"
                   icon={Code}
-                  code={`cd /opt/cuberbox/backend\nexport GOPROXY=https://proxy.golang.org,direct\ngo mod tidy\ngo build -o cuberbox-engine main.go\nsudo mv cuberbox-engine /usr/local/bin/`}
+                  code={`cd /opt/cuberbox/backend\nexport GOPROXY=https://proxy.golang.org,direct\ngo mod init github.com/copantl/cuberbox-pro/backend\ngo get github.com/fiorix/go-eventsocket/eventsocket\ngo mod tidy\ngo build -o cuberbox-engine main.go\nsudo mv cuberbox-engine /usr/local/bin/`}
                />
             </StepCard>
 
