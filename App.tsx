@@ -64,7 +64,6 @@ const App: React.FC = () => {
 
   const handleLogout = () => {
     setIsAuthenticated(false);
-    localStorage.removeItem('cuberbox-session-active');
   };
 
   if (!isAuthenticated) {
@@ -84,7 +83,7 @@ const App: React.FC = () => {
   return (
     <ToastProvider>
       <Router>
-        <div className={`flex h-screen overflow-hidden transition-all duration-700 bg-[#020617] text-white selection:bg-blue-500/30`}>
+        <div className={`flex h-screen overflow-hidden bg-[#020617] text-white selection:bg-orange-500/30`}>
           <Sidebar isOpen={sidebarOpen} toggle={() => setSidebarOpen(!sidebarOpen)} role={user.role} userLevel={user.userLevel} />
           
           <main className={`flex-1 flex flex-col transition-all duration-500 ease-in-out relative ${sidebarOpen ? 'ml-64' : 'ml-20'}`}>
@@ -95,65 +94,19 @@ const App: React.FC = () => {
               onLogout={handleLogout} 
             />
             
-            <div className="flex-1 overflow-y-auto p-6 scrollbar-hide bg-[radial-gradient(circle_at_top_right,_rgba(59,130,246,0.03),_transparent)] relative">
-              {/* Logo Watermark Persistente */}
+            <div className="flex-1 overflow-y-auto p-6 scrollbar-hide bg-[radial-gradient(circle_at_top_right,_rgba(249,115,22,0.03),_transparent)] relative">
               <div className="fixed bottom-8 right-8 opacity-[0.05] pointer-events-none z-0">
                 <Logo className="w-16 h-16" />
               </div>
 
               <div className="relative z-10">
                 <Routes>
-                  {/* Core & Operations */}
                   <Route path="/" element={<AccessControl userLevel={user.userLevel} minLevel={4}><Dashboard /></AccessControl>} />
-                  <Route path="/blueprint" element={<AccessControl userLevel={user.userLevel} minLevel={6}><Workflows /></AccessControl>} />
                   <Route path="/agent" element={<AgentScreen user={user} />} />
                   <Route path="/realtime" element={<AccessControl userLevel={user.userLevel} minLevel={4}><RealTimeMonitor /></AccessControl>} />
-                  <Route path="/gtr" element={<AccessControl userLevel={user.userLevel} minLevel={4}><GTRDashboard /></AccessControl>} />
-                  <Route path="/whatsapp" element={<WhatsAppModule />} />
-                  <Route path="/email" element={<EmailModule />} />
-                  
-                  {/* Strategy & Dialer */}
                   <Route path="/campaigns" element={<AccessControl userLevel={user.userLevel} minLevel={7}><Campaigns /></AccessControl>} />
-                  <Route path="/broadcast-ai" element={<AccessControl userLevel={user.userLevel} minLevel={8}><BroadcastAI /></AccessControl>} />
-                  <Route path="/lists" element={<AccessControl userLevel={user.userLevel} minLevel={7}><ListsManagement /></AccessControl>} />
-                  <Route path="/dnc" element={<AccessControl userLevel={user.userLevel} minLevel={7}><DNCManagement /></AccessControl>} />
-                  
-                  {/* Intelligence & Quality */}
-                  <Route path="/ai-studio" element={<AccessControl userLevel={user.userLevel} minLevel={7}><AIStudio /></AccessControl>} />
-                  <Route path="/qa" element={<AccessControl userLevel={user.userLevel} minLevel={5}><QualityAssurance /></AccessControl>} />
-                  <Route path="/audio-library" element={<AccessControl userLevel={user.userLevel} minLevel={4}><AudioLibrary user={user} /></AccessControl>} />
-                  <Route path="/ivr" element={<AccessControl userLevel={user.userLevel} minLevel={7}><IVRDesigner /></AccessControl>} />
-                  
-                  {/* Data & Analytics */}
-                  <Route path="/crm" element={<AccessControl userLevel={user.userLevel} minLevel={8}><CRMIntegrations /></AccessControl>} />
-                  <Route path="/crm-designer" element={<AccessControl userLevel={user.userLevel} minLevel={8}><FormDesigner /></AccessControl>} />
-                  <Route path="/crm-hub" element={<AccessControl userLevel={user.userLevel} minLevel={6}><ExternalCRMHub /></AccessControl>} />
-                  <Route path="/analytics-hub" element={<AccessControl userLevel={user.userLevel} minLevel={6}><AnalyticsHub /></AccessControl>} />
-                  <Route path="/reports" element={<AccessControl userLevel={user.userLevel} minLevel={4}><Reports /></AccessControl>} />
-                  <Route path="/agent-performance" element={<AccessControl userLevel={user.userLevel} minLevel={4}><AgentPerformanceReport /></AccessControl>} />
-                  <Route path="/storage" element={<AccessControl userLevel={user.userLevel} minLevel={9}><StorageServer /></AccessControl>} />
-                  
-                  {/* Infrastructure & Security */}
-                  <Route path="/cluster" element={<AccessControl userLevel={user.userLevel} minLevel={9}><ClusterMonitor /></AccessControl>} />
-                  <Route path="/cluster-provisioning" element={<AccessControl userLevel={user.userLevel} minLevel={9}><ClusterProvisioning /></AccessControl>} />
-                  <Route path="/ha-config" element={<AccessControl userLevel={user.userLevel} minLevel={9}><HAConfig /></AccessControl>} />
                   <Route path="/telephony" element={<AccessControl userLevel={user.userLevel} minLevel={9}><TelephonyConfig /></AccessControl>} />
-                  <Route path="/audit" element={<AccessControl userLevel={user.userLevel} minLevel={9}><SystemAudit /></AccessControl>} />
                   <Route path="/setup-wizard" element={<AccessControl userLevel={user.userLevel} minLevel={9}><SystemSetupWizard /></AccessControl>} />
-                  
-                  {/* Administration */}
-                  <Route path="/users" element={<AccessControl userLevel={user.userLevel} minLevel={9}><UsersManagement /></AccessControl>} />
-                  <Route path="/user-groups" element={<AccessControl userLevel={user.userLevel} minLevel={9}><UserGroupsManagement /></AccessControl>} />
-                  <Route path="/profiles" element={<AccessControl userLevel={user.userLevel} minLevel={9}><UserProfilesManagement /></AccessControl>} />
-                  <Route path="/pause-codes" element={<AccessControl userLevel={user.userLevel} minLevel={8}><PauseCodesManagement /></AccessControl>} />
-                  <Route path="/call-codes" element={<AccessControl userLevel={user.userLevel} minLevel={8}><CallCodesManagement /></AccessControl>} />
-                  <Route path="/smtp" element={<AccessControl userLevel={user.userLevel} minLevel={9}><SMTPServerManagement /></AccessControl>} />
-                  
-                  {/* System & Help */}
-                  <Route path="/settings" element={<Settings user={user} currentTheme={theme} onThemeChange={handleThemeChange} />} />
-                  <Route path="/manual" element={<UserManual />} />
-                  <Route path="/instructions" element={<Instructions />} />
-                  
                   <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
               </div>

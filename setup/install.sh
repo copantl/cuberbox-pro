@@ -1,20 +1,18 @@
 #!/bin/bash
 
 # =============================================================================
-# CUBERBOX PRO - QUANTICA TITAN INSTALLER V5.4.1 (DEBIAN 12 + QUANTICA SW)
-# Subdomain: quantica.signalwire.com
-# Auth Fix: PT5b9edec3ca49c15002eae76b499aa87e112d376db148e9ed
+# CUBERBOX PRO - TITAN ASTERISK INSTALLER V6.0.0 (DEBIAN 12 + ASTERISK 21)
+# Infrastructure: Asterisk 21 LTS + PJSIP + AMI
 # =============================================================================
 
 set -e
 
-# Credenciales de Infraestructura (SignalWire PAT)
+# Credenciales para el Bridge de Datos (Opcional si se usa SW para Trunks)
 SW_TOKEN="PT5b9edec3ca49c15002eae76b499aa87e112d376db148e9ed"
-SW_HOST="quantica.signalwire.com"
 
-# Paleta de Colores Titan
+# Paleta de Colores Asterisk Edition
 BOLD='\033[1m'
-CYAN='\033[0;36m'
+ORANGE='\033[0;33m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 RED='\033[0;31m'
@@ -25,90 +23,89 @@ function log_success() { echo -e "${GREEN}[OK]${NC} $1"; }
 function log_error() { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
 
 clear
-echo -e "${BOLD}${CYAN}"
-echo "   ________________  _   __  ________   __  _____  ____ "
-echo "  /_  __/_  __/ __ \/ | / / / ____/ /  / / / / __ \/ __ \\"
-echo "   / /   / / / /_/ /  |/ / / /   / /  / / / / /_/ / /_/ /"
-echo "  / /   / / / _, _/ /|  / / /___/ /__/ /_/ / _, _/ _, _/ "
-echo " /_/   /_/ /_/ |_/_/ |_/  \____/_____/\____/_/ |_/_/ |_|  "
-echo -e "          QUANTICA TITAN ENGINE - v5.4.1 (DEBIAN 12)${NC}\n"
+echo -e "${BOLD}${ORANGE}"
+echo "      _      ____ _____ _____ ____  ___ ____  _  __ "
+echo "     / \    / ___|_   _| ____|  _ \|_ _/ ___|| |/ / "
+echo "    / _ \   \___ \ | | |  _| | |_) || |\___ \| ' /  "
+echo "   / ___ \   ___) || | | |___|  _ < | | ___) | . \  "
+echo "  /_/   \_\ |____/ |_| |_____|_| \_\___|____/|_|\_\ "
+echo -e "          TITAN ENGINE v6.0.0 - ASTERISK EDITION${NC}\n"
 
 # 1. Validación de Entorno
 if [[ $EUID -ne 0 ]]; then
-   log_error "Este instalador de infraestructura requiere privilegios ROOT."
+   log_error "Este instalador requiere privilegios ROOT."
 fi
 
-# 2. Herramientas Core
-log_info "Sincronizando herramientas de transporte y criptografía..."
+# 2. Sincronización de Repositorios Core
+log_info "Actualizando fuentes de Debian 12..."
 apt-get update && apt-get upgrade -y
-apt-get install -y wget curl gnupg2 software-properties-common apt-transport-https lsb-release git build-essential golang-go ufw
+apt-get install -y wget curl gnupg2 software-properties-common lsb-release git build-essential golang-go ufw
 
-# 3. Autenticación de Repositorios Quantica (Lógica Anti-401)
-log_info "Configurando pasarela de autenticación para $SW_HOST..."
-mkdir -p /etc/apt/auth.conf.d/
-echo "machine $SW_HOST login signalwire password $SW_TOKEN" > /etc/apt/auth.conf.d/freeswitch.conf
-chmod 600 /etc/apt/auth.conf.d/freeswitch.conf
+# 3. Instalación de Asterisk 21 LTS
+log_info "Desplegando Asterisk 21 y componentes PJSIP..."
+apt-get install -y asterisk asterisk-config asterisk-voicemail asterisk-pjsip postgresql-16
 
-# 4. Firma Digital Media Plane Quantica (Carga Autenticada)
-log_info "Importando firma GPG desde canal Quantica (Secure Binary Stream)..."
-curl -u signalwire:$SW_TOKEN -s https://$SW_HOST/repo/deb/debian-release/signalwire-freeswitch-repo.gpg > /tmp/sw.gpg
+# 4. Configuración de Seguridad AMI (Asterisk Manager Interface)
+log_info "Configurando interfaz de gestión AMI (Port 5038)..."
+cat <<EOF > /etc/asterisk/manager.conf
+[general]
+enabled = yes
+port = 5038
+bindaddr = 127.0.0.1
 
-# Verificamos si el archivo contiene datos GPG o una página de error HTML
-if [ ! -s /tmp/sw.gpg ]; then
-    log_error "Falla de autenticación: El servidor no entregó datos GPG. Verifique el Token."
-fi
+[cuberbox_admin]
+secret = $SW_TOKEN
+read = all
+write = all
+EOF
 
-# Inyectamos la llave en el keyring del sistema
-cat /tmp/sw.gpg | gpg --dearmor > /usr/share/keyrings/signalwire-freeswitch-repo.gpg
-rm /tmp/sw.gpg
+# 5. Configuración de PJSIP Transport
+log_info "Inicializando PJSIP Transport (UDP/TCP/WS)..."
+cat <<EOF > /etc/asterisk/pjsip.conf
+[transport-udp]
+type=transport
+protocol=udp
+bind=0.0.0.0
 
-# 5. Inyección de Repositorios Quantica
-log_info "Inyectando fuentes de FreeSwitch 1.10 (Quantica Spec)..."
-OS_CODENAME=$(lsb_release -sc)
-echo "deb [signed-by=/usr/share/keyrings/signalwire-freeswitch-repo.gpg] https://$SW_HOST/repo/deb/debian-release/ $OS_CODENAME main" > /etc/apt/sources.list.d/freeswitch.list
-echo "deb-src [signed-by=/usr/share/keyrings/signalwire-freeswitch-repo.gpg] https://$SW_HOST/repo/deb/debian-release/ $OS_CODENAME main" >> /etc/apt/sources.list.d/freeswitch.list
+[transport-wss]
+type=transport
+protocol=wss
+bind=0.0.0.0:8089
+EOF
 
-# 6. Despliegue de Stack
-log_info "Iniciando instalación desde infraestructura Quantica..."
-apt-get update
-apt-get install -y freeswitch-all postgresql-16
-
-# 7. Preparación de Entorno de Medios
-log_info "Configurando permisos de sistema de archivos..."
+# 6. Preparación de Entorno de Medios
+log_info "Configurando permisos de grabaciones..."
 mkdir -p /opt/cuberbox/recordings
-mkdir -p /var/log/freeswitch
-chown -R www-data:www-data /opt/cuberbox/recordings
+chown -R asterisk:asterisk /opt/cuberbox/recordings
 chmod -R 775 /opt/cuberbox/recordings
 
-# 8. Compilación del Motor Go
-log_info "Compilando CUBERBOX Neural Engine (v5.4.1)..."
+# 7. Compilación del Motor Go (AMI Bridge)
+log_info "Compilando CUBERBOX Asterisk Connector (v6.0.0)..."
 if [ -d "/opt/cuberbox/backend" ]; then
     cd /opt/cuberbox/backend
     go build -v -o /usr/local/bin/cuberbox-core main.go
 else
-    log_info "Clonando repositorio maestro para compilación..."
+    log_info "Clonando repositorio maestro..."
     git clone https://github.com/copantl/cuberbox-pro.git /opt/cuberbox || true
     cd /opt/cuberbox/backend && go build -v -o /usr/local/bin/cuberbox-core main.go || true
 fi
 
-# 9. Seguridad Perimetral
-log_info "Blindando puertos SIP y WebRTC..."
-ufw allow 80/tcp
-ufw allow 443/tcp
+# 8. Firewall Hardening
+log_info "Blindando puertos Asterisk..."
 ufw allow 5060/udp
 ufw allow 5061/tcp
-ufw allow 7443/tcp
-ufw allow 16384:32768/udp
+ufw allow 10000:20000/udp
+ufw allow 5038/tcp
+ufw allow 8089/tcp
 ufw --force enable
 
-# 10. Finalización
-systemctl enable freeswitch
-systemctl restart freeswitch
+# 9. Finalización
+systemctl enable asterisk
+systemctl restart asterisk
 systemctl enable postgresql
 systemctl restart postgresql
 
-log_success "DESPLIEGUE QUANTICA TITAN v5.4.1 COMPLETADO."
-echo -e "\n${BOLD}Infraestructura:${NC} $SW_HOST"
-echo -e "${BOLD}Token Inyectado:${NC} OK (PAT Verified)"
-echo -e "${BOLD}Dashboard:${NC} http://$(hostname -I | awk '{print $1}')"
-echo -e "${BOLD}Estado Auth:${NC} Quantica Token Sincronizado\n"
+log_success "DESPLIEGUE ASTERISK TITAN v6.0.0 COMPLETADO."
+echo -e "\n${BOLD}Motor:${NC} Asterisk 21 LTS"
+echo -e "${BOLD}Control:${NC} AMI Bridge Active"
+echo -e "${BOLD}Dashboard:${NC} http://$(hostname -I | awk '{print $1}')\n"

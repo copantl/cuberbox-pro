@@ -3,43 +3,42 @@ package main
 import (
 	"fmt"
 	"log"
+	"net"
 	"time"
-
-	"github.com/fiorix/go-eventsocket/eventsocket"
 )
 
 func main() {
-	fmt.Println("CUBERBOX NEURAL ENGINE - BOOTING...")
-	fmt.Println("Version: 5.0.0 (PHOENIX CORE)")
-	fmt.Println("Status: System ready, waiting for ESL connection...")
+	fmt.Println("CUBERBOX ASTERISK CONNECTOR - BOOTING...")
+	fmt.Println("Version: 6.0.0 (TITAN ASTERISK)")
+	fmt.Println("Status: Listening for AMI Events on 5038...")
 
-	// Nodo maestro local por defecto
-	addr := "127.0.0.1:8021"
+	addr := "127.0.0.1:5038"
 
-	// Bucle de conexión resiliente
 	for {
-		c, err := eventsocket.Dial(addr, "ClueCon")
+		conn, err := net.Dial("tcp", addr)
 		if err != nil {
-			log.Printf("ERROR: No se puede conectar a FreeSwitch en %s. Reintentando...", addr)
+			log.Printf("ERROR: No se puede conectar a AMI en %s. Reintentando...", addr)
 			time.Sleep(5 * time.Second)
 			continue
 		}
 
-		log.Printf("CONNECTED: Puente ESL establecido con el Media Plane.")
+		fmt.Fprintf(conn, "Action: Login\nUsername: cuberbox_admin\nSecret: PT5b9edec3ca49c15002eae76b499aa87e112d376db148e9ed\n\n")
 
-		// Suscribirse a eventos
-		c.Send("event json ALL")
+		log.Printf("CONNECTED: Puente AMI establecido con Asterisk 21.")
 
+		buffer := make([]byte, 4096)
 		for {
-			ev, err := c.ReadEvent()
+			n, err := conn.Read(buffer)
 			if err != nil {
-				log.Printf("DISCONNECTED: Enlace perdido. Reiniciando secuencia de conexión...")
-				c.Close()
+				log.Printf("DISCONNECTED: Enlace AMI perdido.")
+				conn.Close()
 				break
 			}
-			// Telemetría silenciosa en consola para debug
-			if ev.Get("Event-Name") == "HEARTBEAT" {
-				fmt.Print(".")
+			
+			response := string(buffer[:n])
+			// Telemetría de eventos PJSIP
+			if len(response) > 0 {
+				fmt.Print("*") // Latido de eventos
 			}
 		}
 		time.Sleep(2 * time.Second)
