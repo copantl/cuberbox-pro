@@ -30,16 +30,16 @@ const MANUAL_DATABASE: ManualEntry[] = [
   // --- INSTALACIÓN ---
   {
     id: 'inst-01',
-    title: 'Despliegue Flash (Reckoning Build)',
+    title: 'Despliegue Flash (Titan Build)',
     icon: Zap,
     category: 'INSTALACIÓN',
-    summary: 'Procedimiento estándar para desplegar CUBERBOX ELITE utilizando el protocolo de inyección de firmas GPG estáticas, ignorando errores 401 de descarga.',
+    summary: 'Procedimiento estándar para desplegar CUBERBOX ELITE utilizando el protocolo de validación GPG redundante para evitar errores 401 de SignalWire.',
     steps: [
       { title: 'Conexión SSH', desc: 'Acceda a su terminal como usuario Root.' },
-      { title: 'Ejecutar Instalador Reckoning', desc: 'El script V4.9.0 inyecta las llaves GPG directamente desde el código para evitar bloqueos de autenticación de SignalWire.', code: 'wget -O install.sh https://raw.githubusercontent.com/copantl/cuberbox-pro/main/setup/install.sh && chmod +x install.sh && sudo ./install.sh' },
-      { title: 'Verificación de Daemons', desc: 'El script activará freeswitch y el motor neuronal Go utilizando el nuevo estándar de keyrings de Debian 12.' }
+      { title: 'Ejecutar Instalador Titan', desc: 'El script V4.9.2 valida las llaves GPG contra múltiples fuentes para garantizar el acceso al repositorio maestro.', code: 'wget -O install.sh https://raw.githubusercontent.com/copantl/cuberbox-pro/main/setup/install.sh && chmod +x install.sh && sudo ./install.sh' },
+      { title: 'Verificación de Daemons', desc: 'El script activará freeswitch y el motor neuronal Go utilizando el estándar de keyrings verificado de Debian 12.' }
     ],
-    technicalNote: 'La versión 4.9.0 elimina el error 401 y el error "apt-key not found" al usar el flujo nativo de GPG y llaves binarias embebidas.',
+    technicalNote: 'La versión 4.9.2 elimina definitivamente los fallos de firma digital al implementar un fallback hacia servidores de llaves globales.',
     compliance: 'ISO/IEC 27001: Logs de instalación protegidos vía SHA-256 en /var/log/cuberbox_install.log.'
   },
   {
@@ -253,7 +253,7 @@ const UserManual: React.FC = () => {
                          </p>
                          <div className="flex items-center space-x-2 pt-4 border-t border-slate-800">
                             <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]"></div>
-                            <span className="text-[10px] font-black text-emerald-500 uppercase">Verificado v4.9.0</span>
+                            <span className="text-[10px] font-black text-emerald-500 uppercase">Verificado v4.9.2</span>
                          </div>
                       </div>
                    </div>

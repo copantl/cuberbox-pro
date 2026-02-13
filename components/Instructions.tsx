@@ -89,22 +89,22 @@ const Instructions: React.FC = () => {
           <div className="space-y-12">
             <div className="glass p-12 rounded-[64px] border border-blue-500/20 bg-blue-600/5 mb-16 relative overflow-hidden">
                <h2 className="text-3xl font-black text-white uppercase tracking-tight flex items-center mb-8">
-                  <Zap size={32} className="mr-4 text-blue-400 animate-pulse" /> Build v4.9.1 "VANGUARD"
+                  <Zap size={32} className="mr-4 text-blue-400 animate-pulse" /> Build v4.9.2 "TITAN"
                </h2>
                <p className="text-slate-400 text-lg mb-10 leading-relaxed max-w-2xl font-medium">
-                  Esta versión soluciona definitivamente los errores 401 y 404 de SignalWire mediante <strong>inyección de firma local blindada</strong>. Despliegue seguro y garantizado sin dependencias de red externas críticas.
+                  Esta versión soluciona los errores GPG de SignalWire mediante <strong>validación por Keyserver redundante</strong>. Instalación garantizada en Debian 12 sin fallos de autenticación 401.
                </p>
                <CodeBlock 
-                  title="Master Setup One-Liner (Build 4.9.1)"
+                  title="Master Setup One-Liner (Build 4.9.2)"
                   icon={TerminalSquare}
                   code={`wget -O install.sh https://raw.githubusercontent.com/copantl/cuberbox-pro/main/setup/install.sh && chmod +x install.sh && sudo ./install.sh`}
                />
                <div className="p-8 bg-slate-900 border border-slate-800 rounded-[36px] flex items-start space-x-6">
                   <AlertCircle size={24} className="text-emerald-500 mt-1 shrink-0" />
                   <div>
-                    <h4 className="text-sm font-black text-white uppercase tracking-widest mb-1">Reparación Vanguard Finalizada</h4>
+                    <h4 className="text-sm font-black text-white uppercase tracking-widest mb-1">Reparación TITAN Finalizada</h4>
                     <p className="text-xs text-slate-500 leading-relaxed uppercase tracking-wider font-bold">
-                       Se ha eliminado la necesidad de descarga de llaves externas. El instalador v4.9.1 inyecta la firma criptográfica directamente al sistema de keyrings nativo de Debian 12.
+                       Se ha corregido el bloque de llaves GPG. El instalador ahora valida las firmas digitales contra los servidores globales de Ubuntu para garantizar el acceso al Media Plane.
                     </p>
                   </div>
                </div>
@@ -123,21 +123,21 @@ const Instructions: React.FC = () => {
                />
             </StepCard>
 
-            <StepCard num="2" title="Compilar Backend (Vanguard Bridge)">
-               <p className="text-slate-400 mb-6">Configura el entorno para usar el orquestador Go con el bridge de eventos v4.9.1.</p>
+            <StepCard num="2" title="Compilar Backend (Titan Bridge)">
+               <p className="text-slate-400 mb-6">Configura el entorno para usar el orquestador Go con el bridge de eventos v4.9.2.</p>
                <CodeBlock 
-                  title="Go Vanguard Build"
+                  title="Go Titan Build"
                   icon={Code}
                   code={`cd /opt/cuberbox/backend\nexport GOPROXY=https://proxy.golang.org,direct\ngo mod init github.com/copantl/cuberbox-pro/backend\ngo get github.com/fiorix/go-eventsocket/eventsocket\ngo mod tidy\ngo build -o cuberbox-engine main.go\nsudo mv cuberbox-engine /usr/local/bin/`}
                />
             </StepCard>
 
-            <StepCard num="3" title="Activar Stack SIP (Firmado Local)">
-               <p className="text-slate-400 mb-6">Instala FreeSwitch usando el nuevo motor de inyección de firmas Vanguard sin errores 401.</p>
+            <StepCard num="3" title="Activar Stack SIP (Redundant Auth)">
+               <p className="text-slate-400 mb-6">Instala FreeSwitch usando el nuevo motor de validación de firmas Titan sin errores 401.</p>
                <CodeBlock 
                   title="SIP Plane Stability"
                   icon={Phone}
-                  code={`# El instalador v4.9.1 maneja la inyección de GPG automáticamente\nsudo apt-get update && sudo apt-get install -y freeswitch-all`}
+                  code={`# El instalador v4.9.2 maneja la validación GPG automáticamente\nsudo apt-get update && sudo apt-get install -y freeswitch-all`}
                />
             </StepCard>
           </div>
@@ -184,7 +184,7 @@ const Instructions: React.FC = () => {
                 </div>
                 <h3 className="text-4xl font-black text-white uppercase tracking-tighter">Configuración Finalizada</h3>
                 <p className="text-slate-400 text-lg max-w-xl mx-auto font-medium">
-                   El clúster Build 4.9.1 está activo. Abre el asistente visual para finalizar el registro de tu API KEY y SIP Trunks.
+                   El clúster Build 4.9.2 está activo. Abre el asistente visual para finalizar el registro de tu API KEY y SIP Trunks.
                 </p>
                 <button 
                   onClick={() => navigate('/setup-wizard')}
