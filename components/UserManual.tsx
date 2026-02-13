@@ -30,16 +30,16 @@ const MANUAL_DATABASE: ManualEntry[] = [
   // --- INSTALACIÓN ---
   {
     id: 'inst-01',
-    title: 'Despliegue Flash (Revolution Build)',
+    title: 'Despliegue Flash (Reckoning Build)',
     icon: Zap,
     category: 'INSTALACIÓN',
-    summary: 'Procedimiento estándar para desplegar CUBERBOX ELITE utilizando exclusivamente el canal oficial de SignalWire, garantizando disponibilidad 24/7.',
+    summary: 'Procedimiento estándar para desplegar CUBERBOX ELITE utilizando el protocolo de inyección de firmas GPG estáticas, ignorando errores 401 de descarga.',
     steps: [
       { title: 'Conexión SSH', desc: 'Acceda a su terminal como usuario Root.' },
-      { title: 'Ejecutar Instalador Revolution', desc: 'El script V4.8.9 purga rastros de Sipwise e instala FreeSwitch desde SignalWire con inyección de llaves redundante.', code: 'wget -O install.sh https://raw.githubusercontent.com/copantl/cuberbox-pro/main/setup/install.sh && chmod +x install.sh && sudo ./install.sh' },
-      { title: 'Verificación de Daemons', desc: 'El script activará freeswitch y el motor neuronal Go vinculando las firmas oficiales de SignalWire.' }
+      { title: 'Ejecutar Instalador Reckoning', desc: 'El script V4.9.0 inyecta las llaves GPG directamente desde el código para evitar bloqueos de autenticación de SignalWire.', code: 'wget -O install.sh https://raw.githubusercontent.com/copantl/cuberbox-pro/main/setup/install.sh && chmod +x install.sh && sudo ./install.sh' },
+      { title: 'Verificación de Daemons', desc: 'El script activará freeswitch y el motor neuronal Go utilizando el nuevo estándar de keyrings de Debian 12.' }
     ],
-    technicalNote: 'La versión 4.8.9 elimina el error 404 al omitir mirrors de terceros y conectar directamente con el repositorio maestro de FreeSwitch.',
+    technicalNote: 'La versión 4.9.0 elimina el error 401 y el error "apt-key not found" al usar el flujo nativo de GPG y llaves binarias embebidas.',
     compliance: 'ISO/IEC 27001: Logs de instalación protegidos vía SHA-256 en /var/log/cuberbox_install.log.'
   },
   {
@@ -119,7 +119,7 @@ const UserManual: React.FC = () => {
       <div className="text-center space-y-4">
         <div className="inline-flex items-center space-x-3 bg-blue-500/10 border border-blue-500/20 px-6 py-2.5 rounded-full mb-4">
           <BookOpen size={18} className="text-blue-400" />
-          <span className="text-[11px] font-black text-blue-400 uppercase tracking-[0.4em]">CUBERBOX Knowledge Hub v4.8</span>
+          <span className="text-[11px] font-black text-blue-400 uppercase tracking-[0.4em]">CUBERBOX Knowledge Hub v4.9</span>
         </div>
         <h1 className="text-5xl font-black text-white tracking-tighter uppercase leading-tight">Documentación de Sistema</h1>
         <p className="text-slate-400 text-sm max-w-2xl mx-auto font-medium leading-relaxed">
@@ -253,7 +253,7 @@ const UserManual: React.FC = () => {
                          </p>
                          <div className="flex items-center space-x-2 pt-4 border-t border-slate-800">
                             <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]"></div>
-                            <span className="text-[10px] font-black text-emerald-500 uppercase">Verificado v4.8.9</span>
+                            <span className="text-[10px] font-black text-emerald-500 uppercase">Verificado v4.9.0</span>
                          </div>
                       </div>
                    </div>
