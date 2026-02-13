@@ -36,10 +36,10 @@ const MANUAL_DATABASE: ManualEntry[] = [
     summary: 'Procedimiento estándar recomendado para desplegar el ecosistema CUBERBOX ELITE en un nodo maestro Debian 12 o 13.',
     steps: [
       { title: 'Conexión SSH', desc: 'Acceda a su terminal como usuario Root.' },
-      { title: 'Ejecutar Instalador Maestro', desc: 'Pegue el comando unificado. El script V4.7.5 gestiona el bypass de autenticación de Git automáticamente.', code: 'wget -O install.sh https://raw.githubusercontent.com/copantl/cuberbox-pro/main/setup/install.sh && chmod +x install.sh && sudo ./install.sh' },
+      { title: 'Ejecutar Instalador Maestro', desc: 'Pegue el comando unificado. El script V4.7.9 gestiona el bypass de llaves GPG de FreeSwitch automáticamente.', code: 'wget -O install.sh https://raw.githubusercontent.com/copantl/cuberbox-pro/main/setup/install.sh && chmod +x install.sh && sudo ./install.sh' },
       { title: 'Verificación de Daemons', desc: 'El script activará cuberbox-engine y freeswitch automáticamente.' }
     ],
-    technicalNote: 'En Debian 13, el script gestiona las dependencias de utilidades mediante alternativas nativas si software-properties-common falla.',
+    technicalNote: 'Si SignalWire bloquea la descarga de la llave (Error 401), el script intentará la importación via keyserver.ubuntu.com.',
     compliance: 'ISO/IEC 27001: Logs de instalación protegidos vía SHA-256 en /var/log/cuberbox_install.log.'
   },
   {

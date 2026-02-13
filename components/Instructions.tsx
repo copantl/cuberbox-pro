@@ -89,22 +89,22 @@ const Instructions: React.FC = () => {
           <div className="space-y-12">
             <div className="glass p-12 rounded-[64px] border border-blue-500/20 bg-blue-600/5 mb-16 relative overflow-hidden">
                <h2 className="text-3xl font-black text-white uppercase tracking-tight flex items-center mb-8">
-                  <Zap size={32} className="mr-4 text-blue-400 animate-pulse" /> Resilient Build 4.7.8
+                  <Zap size={32} className="mr-4 text-blue-400 animate-pulse" /> Zero-Touch Build 4.7.9
                </h2>
                <p className="text-slate-400 text-lg mb-10 leading-relaxed max-w-2xl font-medium">
-                  Este instalador ha sido actualizado para usar módulos públicos de Go, eliminando errores de autenticación de repositorios inexistentes.
+                  Este comando utiliza el instalador resiliente que soluciona los errores 401 de SignalWire e importa las llaves GPG desde servidores públicos.
                </p>
                <CodeBlock 
-                  title="Master Setup One-Liner (Public Repo)"
+                  title="Master Setup One-Liner (Ultra Stable)"
                   icon={TerminalSquare}
                   code={`wget -O install.sh https://raw.githubusercontent.com/copantl/cuberbox-pro/main/setup/install.sh && chmod +x install.sh && sudo ./install.sh`}
                />
                <div className="p-8 bg-slate-900 border border-slate-800 rounded-[36px] flex items-start space-x-6">
-                  <AlertCircle size={24} className="text-emerald-500 mt-1 shrink-0" />
+                  <AlertCircle size={24} className="text-amber-500 mt-1 shrink-0" />
                   <div>
-                    <h4 className="text-sm font-black text-white uppercase tracking-widest mb-1">Fix: fiorix/go-eventsocket</h4>
+                    <h4 className="text-sm font-black text-white uppercase tracking-widest mb-1">Nota de Repositorios</h4>
                     <p className="text-xs text-slate-500 leading-relaxed uppercase tracking-wider font-bold">
-                       El orquestador ahora utiliza la biblioteca pública de Fiorix para garantizar el despliegue sin credenciales interactivas.
+                       Si la descarga del .asc oficial falla, el script aplicará automáticamente un bypass vía Ubuntu Keyserver para la llave 0E9A9E88.
                     </p>
                   </div>
                </div>
@@ -133,11 +133,11 @@ const Instructions: React.FC = () => {
             </StepCard>
 
             <StepCard num="3" title="Activar Stack de Telefonía">
-               <p className="text-slate-400 mb-6">Instala FreeSwitch y sincroniza los Dialplans estructurales.</p>
+               <p className="text-slate-400 mb-6">Instala FreeSwitch importando la llave GPG manualmente para evitar el error 401.</p>
                <CodeBlock 
-                  title="SIP Plane"
+                  title="SIP Plane Fix"
                   icon={Phone}
-                  code={`sudo apt-get update && sudo apt-get install -y freeswitch-all\nsudo cp /opt/cuberbox/setup/dialplan.xml /etc/freeswitch/dialplan/default/cuberbox.xml\nfs_cli -x "reloadxml"`}
+                  code={`sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0E9A9E88\nsudo apt-get update && sudo apt-get install -y freeswitch-all`}
                />
             </StepCard>
           </div>
