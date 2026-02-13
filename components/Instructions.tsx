@@ -89,22 +89,22 @@ const Instructions: React.FC = () => {
           <div className="space-y-12">
             <div className="glass p-12 rounded-[64px] border border-blue-500/20 bg-blue-600/5 mb-16 relative overflow-hidden">
                <h2 className="text-3xl font-black text-white uppercase tracking-tight flex items-center mb-8">
-                  <Zap size={32} className="mr-4 text-blue-400 animate-pulse" /> Build v4.8.3 "TITANIUM"
+                  <Zap size={32} className="mr-4 text-blue-400 animate-pulse" /> Build v4.8.4 "AETHER"
                </h2>
                <p className="text-slate-400 text-lg mb-10 leading-relaxed max-w-2xl font-medium">
-                  Esta versión repara automáticamente el error "No valid OpenPGP data found" detectando el formato binario de las llaves SIP.
+                  Esta versión incluye un motor de bootstrap resiliente que soluciona errores de paquetes faltantes y certificados CA obsoletos en Debian minimal.
                </p>
                <CodeBlock 
-                  title="Master Setup One-Liner (Build 4.8.3)"
+                  title="Master Setup One-Liner (Build 4.8.4)"
                   icon={TerminalSquare}
                   code={`wget -O install.sh https://raw.githubusercontent.com/copantl/cuberbox-pro/main/setup/install.sh && chmod +x install.sh && sudo ./install.sh`}
                />
                <div className="p-8 bg-slate-900 border border-slate-800 rounded-[36px] flex items-start space-x-6">
                   <AlertCircle size={24} className="text-emerald-500 mt-1 shrink-0" />
                   <div>
-                    <h4 className="text-sm font-black text-white uppercase tracking-widest mb-1">Reparación GPG Confirmada</h4>
+                    <h4 className="text-sm font-black text-white uppercase tracking-widest mb-1">Reparación de Dependencias Confirmada</h4>
                     <p className="text-xs text-slate-500 leading-relaxed uppercase tracking-wider font-bold">
-                       Se ha corregido el importador de llaves para evitar el comando 'dearmor' cuando el archivo de origen ya es binario.
+                       Se ha eliminado la dependencia obligatoria de software-properties-common, permitiendo la instalación en contenedores y servidores ultra-ligeros.
                     </p>
                   </div>
                </div>
@@ -123,19 +123,19 @@ const Instructions: React.FC = () => {
                />
             </StepCard>
 
-            <StepCard num="2" title="Compilar Backend (Titanium Bridge)">
-               <p className="text-slate-400 mb-6">Configura el entorno para usar el orquestador Go con el bridge de eventos v4.8.3.</p>
+            <StepCard num="2" title="Compilar Backend (Aether Bridge)">
+               <p className="text-slate-400 mb-6">Configura el entorno para usar el orquestador Go con el bridge de eventos v4.8.4.</p>
                <CodeBlock 
-                  title="Go Titanium Build"
+                  title="Go Aether Build"
                   icon={Code}
                   code={`cd /opt/cuberbox/backend\nexport GOPROXY=https://proxy.golang.org,direct\ngo mod init github.com/copantl/cuberbox-pro/backend\ngo get github.com/fiorix/go-eventsocket/eventsocket\ngo mod tidy\ngo build -o cuberbox-engine main.go\nsudo mv cuberbox-engine /usr/local/bin/`}
                />
             </StepCard>
 
-            <StepCard num="3" title="Activar Stack SIP (Binary Key Fixed)">
-               <p className="text-slate-400 mb-6">Instala FreeSwitch usando el mirror Sipwise con copia binaria de llaves.</p>
+            <StepCard num="3" title="Activar Stack SIP (Manual Repo Method)">
+               <p className="text-slate-400 mb-6">Instalación directa de FreeSwitch sin depender de add-apt-repository.</p>
                <CodeBlock 
-                  title="SIP Plane Integrity"
+                  title="SIP Plane Resilient"
                   icon={Phone}
                   code={`wget -qO /usr/share/keyrings/sipwise-keyring.gpg https://deb.sipwise.com/spce/keyring.gpg\necho "deb [signed-by=/usr/share/keyrings/sipwise-keyring.gpg] https://deb.sipwise.com/spce/mr11.1.1/ bookworm main" | sudo tee /etc/apt/sources.list.d/sipwise.list\nsudo apt-get update && sudo apt-get install -y freeswitch-all`}
                />
@@ -184,7 +184,7 @@ const Instructions: React.FC = () => {
                 </div>
                 <h3 className="text-4xl font-black text-white uppercase tracking-tighter">Configuración Finalizada</h3>
                 <p className="text-slate-400 text-lg max-w-xl mx-auto font-medium">
-                   El clúster Build 4.8.3 está activo. Abre el asistente visual para finalizar el registro de tu API KEY y SIP Trunks.
+                   El clúster Build 4.8.4 está activo. Abre el asistente visual para finalizar el registro de tu API KEY y SIP Trunks.
                 </p>
                 <button 
                   onClick={() => navigate('/setup-wizard')}
