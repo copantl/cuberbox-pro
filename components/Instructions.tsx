@@ -89,22 +89,22 @@ const Instructions: React.FC = () => {
           <div className="space-y-12">
             <div className="glass p-12 rounded-[64px] border border-blue-500/20 bg-blue-600/5 mb-16 relative overflow-hidden">
                <h2 className="text-3xl font-black text-white uppercase tracking-tight flex items-center mb-8">
-                  <Zap size={32} className="mr-4 text-blue-400 animate-pulse" /> Ultra-Stable Setup
+                  <Zap size={32} className="mr-4 text-blue-400 animate-pulse" /> Zero-Touch Installation
                </h2>
                <p className="text-slate-400 text-lg mb-10 leading-relaxed max-w-2xl font-medium">
-                  Copia y pega este comando en tu terminal de Debian. Este instalador gestiona fallos de paquetes y solicita credenciales de Git si el repositorio es privado.
+                  Este comando descarga el script maestro V4.7.5 que soluciona los errores de autenticación de Git y dependencias de Go automáticamente.
                </p>
                <CodeBlock 
-                  title="Master Setup One-Liner"
+                  title="Master Setup One-Liner (Stable)"
                   icon={TerminalSquare}
                   code={`wget -O install.sh https://raw.githubusercontent.com/copantl/cuberbox-pro/main/setup/install.sh && chmod +x install.sh && sudo ./install.sh`}
                />
                <div className="p-8 bg-slate-900 border border-slate-800 rounded-[36px] flex items-start space-x-6">
                   <AlertCircle size={24} className="text-amber-500 mt-1 shrink-0" />
                   <div>
-                    <h4 className="text-sm font-black text-white uppercase tracking-widest mb-1">Nota de Git</h4>
+                    <h4 className="text-sm font-black text-white uppercase tracking-widest mb-1">Reparación de Go Modules</h4>
                     <p className="text-xs text-slate-500 leading-relaxed uppercase tracking-wider font-bold">
-                       Si el terminal le solicita Usuario/Password durante el proceso, ingrese su GitHub Personal Access Token (PAT).
+                       El script ahora fuerza el uso de GOPROXY, eliminando el error de "could not read Username" al descargar dependencias SIP de GitHub.
                     </p>
                   </div>
                </div>
@@ -115,7 +115,7 @@ const Instructions: React.FC = () => {
         {activeTab === 'MANUAL' && (
           <div className="space-y-4">
             <StepCard num="1" title="Sincronizar Repositorio Maestro">
-               <p className="text-slate-400 mb-6">Obtén el núcleo estructural de CUBERBOX utilizando la nueva ruta oficial.</p>
+               <p className="text-slate-400 mb-6">Obtén el núcleo estructural de CUBERBOX utilizando la ruta oficial corregida.</p>
                <CodeBlock 
                   title="Source Checkout"
                   icon={GitBranch}
@@ -123,12 +123,12 @@ const Instructions: React.FC = () => {
                />
             </StepCard>
 
-            <StepCard num="2" title="Compilar Puente Go (Backend)">
-               <p className="text-slate-400 mb-6">Inicializa los módulos y construye el binario de orquestación dentro del directorio backend.</p>
+            <StepCard num="2" title="Compilar Backend (Anti-Auth Fix)">
+               <p className="text-slate-400 mb-6">Configura el entorno para evitar bloqueos de terminal en Git.</p>
                <CodeBlock 
-                  title="Backend Build"
+                  title="Go Resilient Build"
                   icon={Code}
-                  code={`cd /opt/cuberbox/backend\ngo mod init github.com/copantl/cuberbox-pro/backend\ngo mod tidy\ngo build -o cuberbox-engine main.go\nsudo mv cuberbox-engine /usr/local/bin/`}
+                  code={`cd /opt/cuberbox/backend\nexport GOPROXY=https://proxy.golang.org,direct\ngo mod tidy\ngo build -o cuberbox-engine main.go\nsudo mv cuberbox-engine /usr/local/bin/`}
                />
             </StepCard>
 
@@ -151,7 +151,7 @@ const Instructions: React.FC = () => {
                 </div>
                 <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Esquema SQL</h3>
                 <p className="text-slate-400 leading-relaxed font-medium">
-                   Para bases de datos masivas en PostgreSQL 16, el esquema optimizado utiliza particionamiento por UUID.
+                   Optimizado para PostgreSQL 16 con soporte UUID v4 nativo.
                 </p>
                 <CodeBlock 
                   title="Database Injection"
@@ -165,7 +165,7 @@ const Instructions: React.FC = () => {
                 </div>
                 <h3 className="text-3xl font-black text-white uppercase tracking-tighter">UI Dist</h3>
                 <p className="text-slate-400 leading-relaxed font-medium">
-                   Sirve el frontend compilado mediante Nginx para máximo rendimiento en producción.
+                   Sirve el frontend compilado mediante Nginx para máximo rendimiento.
                 </p>
                 <CodeBlock 
                   title="Nginx Config"

@@ -36,24 +36,24 @@ const MANUAL_DATABASE: ManualEntry[] = [
     summary: 'Procedimiento estándar recomendado para desplegar el ecosistema CUBERBOX ELITE en un nodo maestro Debian 12 o 13.',
     steps: [
       { title: 'Conexión SSH', desc: 'Acceda a su terminal como usuario Root.' },
-      { title: 'Ejecutar Instalador Maestro', desc: 'Pegue el comando de instalación de una sola línea. El script forzará la visibilidad de Git para permitir credenciales.', code: 'wget -O install.sh https://raw.githubusercontent.com/copantl/cuberbox-pro/main/setup/install.sh && chmod +x install.sh && sudo ./install.sh' },
+      { title: 'Ejecutar Instalador Maestro', desc: 'Pegue el comando unificado. El script V4.7.5 gestiona el bypass de autenticación de Git automáticamente.', code: 'wget -O install.sh https://raw.githubusercontent.com/copantl/cuberbox-pro/main/setup/install.sh && chmod +x install.sh && sudo ./install.sh' },
       { title: 'Verificación de Daemons', desc: 'El script activará cuberbox-engine y freeswitch automáticamente.' }
     ],
-    technicalNote: 'Si el repositorio es privado, el terminal solicitará su Token de Acceso Personal de GitHub.',
+    technicalNote: 'En Debian 13, el script gestiona las dependencias de utilidades mediante alternativas nativas si software-properties-common falla.',
     compliance: 'ISO/IEC 27001: Logs de instalación protegidos vía SHA-256 en /var/log/cuberbox_install.log.'
   },
   {
     id: 'inst-02',
-    title: 'Compilación Manual del Engine',
+    title: 'Compilación Manual del Engine (Fix Auth)',
     icon: TerminalSquare,
     category: 'INSTALACIÓN',
-    summary: 'Guía técnica para administradores que requieren compilar el orquestador Go desde el código fuente.',
+    summary: 'Guía técnica para administradores que requieren compilar el orquestador Go evitando errores de terminal Git.',
     steps: [
       { title: 'Clonar Repositorio', desc: 'Obtenga el código fuente del repositorio oficial.', code: 'git clone https://github.com/copantl/cuberbox-pro.git /opt/cuberbox' },
-      { title: 'Inicializar Entorno Go', desc: 'Acceda a la carpeta backend y genere el archivo de módulo.', code: 'cd /opt/cuberbox/backend\ngo mod init github.com/copantl/cuberbox-pro/backend\ngo mod tidy' },
-      { title: 'Build del Binario', desc: 'Compile el binario optimizado para su arquitectura.', code: 'go build -o cuberbox-engine main.go' }
+      { title: 'Evitar Bloqueos de Git', desc: 'Configure el entorno para usar el proxy oficial de Go.', code: 'export GOPROXY=https://proxy.golang.org,direct\ncd /opt/cuberbox/backend' },
+      { title: 'Build del Binario', desc: 'Compile el orquestador SIP.', code: 'go mod tidy\ngo build -o cuberbox-engine main.go' }
     ],
-    technicalNote: 'Requiere Go 1.22+ para soporte nativo de Gemini 3 Pro.'
+    technicalNote: 'El uso de GOPROXY evita que Go intente autenticarse en GitHub interactivamente.'
   },
 
   // --- ADMINISTRACIÓN: PERFILES & NIVELES ---
