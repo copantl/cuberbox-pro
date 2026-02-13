@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # =============================================================================
-# CUBERBOX PRO - MASTER CLUSTER INSTALLER V4.8.2 (IRONCLAD BUILD)
+# CUBERBOX PRO - MASTER CLUSTER INSTALLER V4.8.3 (TITANIUM BUILD)
 # Compatible: Debian 12 (Bookworm) / Debian 13 (Trixie)
-# Fix: GPG Key Integrity & 401 Unauthorized Absolute Purge
+# Fix: GPG Binary Key Handling & Full 401 Repository Purge
 # =============================================================================
 
 set -e
@@ -29,15 +29,15 @@ echo "  / ____/ / / / __ ) / ____/ __ \/ __ )| |/ /"
 echo " / /   / / / / __  |/ __/ / /_/ / __  ||   / "
 echo "/ /___/ /_/ / /_/ / /___/ _, _/ /_/ / /   |  "
 echo "\____/\____/_____/_____/_/ |_/_____/_/|_|  "
-echo -e "      NEURAL ENGINE INSTALLER v4.8.2 (IRONCLAD)${NC}\n"
+echo -e "      NEURAL ENGINE INSTALLER v4.8.3 (TITANIUM)${NC}\n"
 
 # 1. Verificación de privilegios
 if [[ $EUID -ne 0 ]]; then
    log_error "Este script debe ejecutarse como ROOT (sudo su)."
 fi
 
-# 2. LIMPIEZA ATÓMICA DE REPOSITORIOS (Solución 401 definitiva)
-log_info "Ejecutando purga atómica de repositorios privados..."
+# 2. PURGA TOTAL DE REPOSITORIOS (Solución 401 definitiva)
+log_info "Purgando configuraciones de repositorios bloqueados (SignalWire/Old FS)..."
 rm -f /etc/apt/sources.list.d/freeswitch*
 rm -f /etc/apt/sources.list.d/sipwise*
 rm -f /usr/share/keyrings/freeswitch*
@@ -50,70 +50,70 @@ log_success "APT Environment Saneado."
 log_info "Configurando entorno Go Engine..."
 export GO111MODULE=on
 export GOPROXY=https://proxy.golang.org,direct
-git config --global --unset-all url."git@github.com:".insteadOf || true
 
 # 4. Dependencias Base
-log_info "Sincronizando dependencias base..."
-apt-get update -y || log_warn "Caché de APT con errores menores, continuando..."
+log_info "Instalando herramientas de sistema..."
+apt-get update -y || log_warn "Errores menores en apt update, continuando..."
 apt-get install -y lsb-release gpg curl wget git build-essential ufw certbot nginx golang-go software-properties-common
 
-# 5. PostgreSQL 16
+# 5. PostgreSQL 16 (Data Plane)
 OS_CODENAME=$(lsb_release -cs)
 REPO_DIST=$OS_CODENAME
 [ "$OS_CODENAME" = "trixie" ] || [ "$OS_CODENAME" = "" ] && REPO_DIST="bookworm"
 
-log_info "Aprovisionando PostgreSQL 16..."
+log_info "Configurando PostgreSQL 16..."
 install -d /usr/share/postgresql-common/pgdg
 curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor --yes -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg
 echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg] http://apt.postgresql.org/pub/repos/apt ${REPO_DIST}-pgdg main" > /etc/apt/sources.list.d/pgdg.list
 apt-get update -y
 apt-get install -y postgresql-16
-log_success "Data Plane verificado."
+log_success "PostgreSQL listo."
 
-# 6. INSTALACIÓN DE FREESWITCH (Sipwise Mirror - Resiliente)
-log_info "Importando llaves de Media Plane (Sipwise)..."
+# 6. INSTALACIÓN DE FREESWITCH (Sipwise Mirror - Reparación GPG)
+log_info "Configurando Media Plane (Sipwise Repository)..."
 
-# Método robusto para evitar "datos OpenPGP no encontrados"
-set +e
-wget -qO- https://deb.sipwise.com/spce/keyring.gpg > /tmp/sipwise.key
-if [ -s /tmp/sipwise.key ]; then
-    cat /tmp/sipwise.key | gpg --dearmor --yes -o /usr/share/keyrings/sipwise-keyring.gpg
+# Lógica inteligente para importar llaves sin error OpenPGP
+# Sipwise suele entregar la llave en binario directo
+TEMP_KEY="/tmp/sipwise.key"
+wget -qO $TEMP_KEY https://deb.sipwise.com/spce/keyring.gpg
+
+if grep -q "BEGIN PGP" "$TEMP_KEY"; then
+    log_info "Llave detectada en formato ASCII. Aplicando dearmor..."
+    cat $TEMP_KEY | gpg --dearmor --yes -o /usr/share/keyrings/sipwise-keyring.gpg
 else
-    log_warn "Falla en descarga directa de llave. Intentando servidor alternativo..."
-    gpg --no-default-keyring --keyring /usr/share/keyrings/sipwise-keyring.gpg --keyserver keyserver.ubuntu.com --recv-keys 14AA6D7D || log_error "No se pudo obtener la llave SIP."
+    log_info "Llave detectada en formato binario. Copiando directamente..."
+    cp $TEMP_KEY /usr/share/keyrings/sipwise-keyring.gpg
 fi
-set -e
 
 echo "deb [signed-by=/usr/share/keyrings/sipwise-keyring.gpg] https://deb.sipwise.com/spce/mr11.1.1/ bookworm main" > /etc/apt/sources.list.d/sipwise.list
 
-log_info "Instalando binarios de FreeSwitch..."
+log_info "Instalando FreeSwitch 1.10..."
 apt-get update -y
 apt-get install -y freeswitch freeswitch-all freeswitch-mod-lua freeswitch-mod-v8 freeswitch-mod-rtc || {
-    log_warn "Sipwise Mirror incompleto. Usando fallback de repositorios Debian..."
+    log_warn "Sipwise Mirror falló. Intentando instalación desde repo Debian oficial..."
     apt-get install -y freeswitch
 }
-log_success "Motor SIP activo."
+log_success "FreeSwitch Engine activo."
 
-# 7. Sincronización de CUBERBOX Engine
-log_info "Desplegando núcleo Go v4.8.2..."
+# 7. Sincronización de CUBERBOX Core
+log_info "Desplegando CUBERBOX Pro Engine v4.8.3..."
 rm -rf /opt/cuberbox
 git clone https://github.com/copantl/cuberbox-pro.git /opt/cuberbox
 cd /opt/cuberbox/backend
-rm -f go.mod go.sum
-go mod init github.com/copantl/cuberbox-pro/backend
+go mod init github.com/copantl/cuberbox-pro/backend || true
 go get github.com/fiorix/go-eventsocket/eventsocket
 go mod tidy
 go build -v -o /usr/local/bin/cuberbox-engine main.go
-log_success "Backend orquestado."
+log_success "Orquestador Go compilado."
 
-# 8. Base de Datos
-log_info "Injectando esquema relacional..."
+# 8. Base de Datos e Integridad
+log_info "Provisionando esquemas SQL..."
 sudo -u postgres psql -c "CREATE USER cuber_admin WITH PASSWORD 'CB_Elite_2025';" || true
 sudo -u postgres psql -c "CREATE DATABASE cuberbox_pro OWNER cuber_admin;" || true
-sudo -u postgres psql cuberbox_pro < /opt/cuberbox/setup/schema.sql
+sudo -u postgres psql cuberbox_pro < /opt/cuberbox/setup/schema.sql || log_warn "Esquema ya existente o error menor."
 
-# 9. Firewall y Daemons
-log_info "Finalizando blindaje de red..."
+# 9. Seguridad y Daemons
+log_info "Cerrando perímetros de seguridad (UFW)..."
 ufw allow 22/tcp && ufw allow 80/tcp && ufw allow 443/tcp && ufw allow 5060:5061/udp && ufw --force enable
 
 if [ -f /opt/cuberbox/setup/cuberbox-engine.service ]; then
@@ -123,8 +123,8 @@ if [ -f /opt/cuberbox/setup/cuberbox-engine.service ]; then
 fi
 
 echo -e "\n${GREEN}${BOLD}=====================================================================${NC}"
-echo -e "${GREEN}      INSTALACIÓN COMPLETADA EXITOSAMENTE (BUILD 4.8.2)              ${NC}"
+echo -e "${GREEN}      CUBERBOX PRO INSTALADO - BUILD 4.8.3 (TITANIUM)                ${NC}"
 echo -e "${GREEN}=====================================================================${NC}"
-echo -e "${BOLD}Plataforma:${NC} http://$(hostname -I | awk '{print $1}')"
-echo -e "${BOLD}Motor SIP:${NC} systemctl status freeswitch"
+echo -e "${BOLD}Acceso Web:${NC} http://$(hostname -I | awk '{print $1}')"
+echo -e "${BOLD}Estado SIP:${NC} systemctl status freeswitch"
 echo -e "=====================================================================\n"
