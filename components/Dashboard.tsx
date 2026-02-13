@@ -73,7 +73,7 @@ const Dashboard: React.FC = () => {
             <h2 className="text-4xl font-black text-white tracking-tighter uppercase flex items-center">
               Command Terminal
             </h2>
-            <p className="text-slate-400 text-sm font-medium mt-1 uppercase tracking-widest opacity-60">System v5.4.0 • Quantica Node Linked</p>
+            <p className="text-slate-400 text-sm font-medium mt-1 uppercase tracking-widest opacity-60">System v5.4.1 • Quantica Node Linked</p>
           </div>
         </div>
         <button 

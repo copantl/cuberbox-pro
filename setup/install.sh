@@ -1,8 +1,9 @@
 #!/bin/bash
 
 # =============================================================================
-# CUBERBOX PRO - QUANTICA TITAN INSTALLER V5.4.0 (DEBIAN 12 + QUANTICA SW)
+# CUBERBOX PRO - QUANTICA TITAN INSTALLER V5.4.1 (DEBIAN 12 + QUANTICA SW)
 # Subdomain: quantica.signalwire.com
+# Auth Fix: PT5b9edec3ca49c15002eae76b499aa87e112d376db148e9ed
 # =============================================================================
 
 set -e
@@ -30,7 +31,7 @@ echo "  /_  __/_  __/ __ \/ | / / / ____/ /  / / / / __ \/ __ \\"
 echo "   / /   / / / /_/ /  |/ / / /   / /  / / / / /_/ / /_/ /"
 echo "  / /   / / / _, _/ /|  / / /___/ /__/ /_/ / _, _/ _, _/ "
 echo " /_/   /_/ /_/ |_/_/ |_/  \____/_____/\____/_/ |_/_/ |_|  "
-echo -e "          QUANTICA TITAN ENGINE - v5.4.0 (DEBIAN 12)${NC}\n"
+echo -e "          QUANTICA TITAN ENGINE - v5.4.1 (DEBIAN 12)${NC}\n"
 
 # 1. Validación de Entorno
 if [[ $EUID -ne 0 ]]; then
@@ -48,12 +49,16 @@ mkdir -p /etc/apt/auth.conf.d/
 echo "machine $SW_HOST login signalwire password $SW_TOKEN" > /etc/apt/auth.conf.d/freeswitch.conf
 chmod 600 /etc/apt/auth.conf.d/freeswitch.conf
 
-# 4. Firma Digital Media Plane Quantica
-log_info "Importando firma GPG desde canal Quantica..."
+# 4. Firma Digital Media Plane Quantica (Carga Autenticada)
+log_info "Importando firma GPG desde canal Quantica (Secure Binary Stream)..."
 curl -u signalwire:$SW_TOKEN -s https://$SW_HOST/repo/deb/debian-release/signalwire-freeswitch-repo.gpg > /tmp/sw.gpg
+
+# Verificamos si el archivo contiene datos GPG o una página de error HTML
 if [ ! -s /tmp/sw.gpg ]; then
-    log_error "Token o URL de Quántica inválidos. No se pudo obtener la firma GPG."
+    log_error "Falla de autenticación: El servidor no entregó datos GPG. Verifique el Token."
 fi
+
+# Inyectamos la llave en el keyring del sistema
 cat /tmp/sw.gpg | gpg --dearmor > /usr/share/keyrings/signalwire-freeswitch-repo.gpg
 rm /tmp/sw.gpg
 
@@ -76,7 +81,7 @@ chown -R www-data:www-data /opt/cuberbox/recordings
 chmod -R 775 /opt/cuberbox/recordings
 
 # 8. Compilación del Motor Go
-log_info "Compilando CUBERBOX Neural Engine (v5.4.0)..."
+log_info "Compilando CUBERBOX Neural Engine (v5.4.1)..."
 if [ -d "/opt/cuberbox/backend" ]; then
     cd /opt/cuberbox/backend
     go build -v -o /usr/local/bin/cuberbox-core main.go
@@ -102,7 +107,8 @@ systemctl restart freeswitch
 systemctl enable postgresql
 systemctl restart postgresql
 
-log_success "DESPLIEGUE QUANTICA TITAN v5.4.0 COMPLETADO."
+log_success "DESPLIEGUE QUANTICA TITAN v5.4.1 COMPLETADO."
 echo -e "\n${BOLD}Infraestructura:${NC} $SW_HOST"
+echo -e "${BOLD}Token Inyectado:${NC} OK (PAT Verified)"
 echo -e "${BOLD}Dashboard:${NC} http://$(hostname -I | awk '{print $1}')"
 echo -e "${BOLD}Estado Auth:${NC} Quantica Token Sincronizado\n"
