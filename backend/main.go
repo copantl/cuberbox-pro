@@ -17,7 +17,7 @@ type ClusterNode struct {
 
 func main() {
 	fmt.Println("CUBERBOX NEURAL ENGINE - CLUSTER MANAGER BOOTING...")
-	fmt.Println("Build Version: 4.8.4 (Aether Bridge)")
+	fmt.Println("Build Version: 4.8.5 (Stalwart Bridge)")
 
 	// Nodo maestro local por defecto
 	nodes := []ClusterNode{

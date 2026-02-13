@@ -30,16 +30,16 @@ const MANUAL_DATABASE: ManualEntry[] = [
   // --- INSTALACIÓN ---
   {
     id: 'inst-01',
-    title: 'Despliegue Flash (Resiliente)',
+    title: 'Despliegue Flash (Sources Sanitized)',
     icon: Zap,
     category: 'INSTALACIÓN',
-    summary: 'Procedimiento estándar recomendado para desplegar el ecosistema CUBERBOX ELITE con bootstrap de certificados automático.',
+    summary: 'Procedimiento estándar recomendado para desplegar CUBERBOX ELITE incluso en servidores con repositorios APT corruptos.',
     steps: [
       { title: 'Conexión SSH', desc: 'Acceda a su terminal como usuario Root.' },
-      { title: 'Ejecutar Instalador Maestro', desc: 'El script V4.8.4 gestiona el bypass de software-properties-common y actualiza certificados CA automáticamente.', code: 'wget -O install.sh https://raw.githubusercontent.com/copantl/cuberbox-pro/main/setup/install.sh && chmod +x install.sh && sudo ./install.sh' },
-      { title: 'Verificación de Daemons', desc: 'El script activará cuberbox-engine y freeswitch automáticamente usando el mirror verificado.' }
+      { title: 'Ejecutar Instalador Maestro', desc: 'El script V4.8.5 repara automáticamente su archivo sources.list e instala dependencias omitiendo utilitarios fallidos.', code: 'wget -O install.sh https://raw.githubusercontent.com/copantl/cuberbox-pro/main/setup/install.sh && chmod +x install.sh && sudo ./install.sh' },
+      { title: 'Verificación de Daemons', desc: 'El script activará freeswitch y el motor neuronal Go usando llaves GPG directas.' }
     ],
-    technicalNote: 'La versión 4.8.4 incluye un método manual de inyección de repositorios para evitar fallas por paquetes de sistema no localizados.',
+    technicalNote: 'La versión 4.8.5 inyecta espejos oficiales de Debian 12 si detecta que el sistema no puede localizar paquetes base.',
     compliance: 'ISO/IEC 27001: Logs de instalación protegidos vía SHA-256 en /var/log/cuberbox_install.log.'
   },
   {
@@ -253,7 +253,7 @@ const UserManual: React.FC = () => {
                          </p>
                          <div className="flex items-center space-x-2 pt-4 border-t border-slate-800">
                             <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]"></div>
-                            <span className="text-[10px] font-black text-emerald-500 uppercase">Verificado v4.8.4</span>
+                            <span className="text-[10px] font-black text-emerald-500 uppercase">Verificado v4.8.5</span>
                          </div>
                       </div>
                    </div>
