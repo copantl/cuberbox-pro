@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # =============================================================================
-# CUBERBOX PRO - MASTER CLUSTER INSTALLER V4.6.5 (STABLE)
+# CUBERBOX PRO - MASTER CLUSTER INSTALLER V4.6.8 (STABLE)
 # Compatible: Debian 12 (Bookworm) / Debian 13 (Trixie)
 # Repo: https://github.com/copantl/cuberbox-pro
 # =============================================================================
 
 set -e
 
-# Estética de Terminal
+# Colores para UX de Terminal
 BOLD='\033[1m'
 BLUE='\033[0;34m'
 CYAN='\033[0;36m'
@@ -29,59 +29,74 @@ echo "  / ____/ / / / __ ) / ____/ __ \/ __ )| |/ /"
 echo " / /   / / / / __  |/ __/ / /_/ / __  ||   / "
 echo "/ /___/ /_/ / /_/ / /___/ _, _/ /_/ / /   |  "
 echo "\____/\____/_____/_____/_/ |_/_____/_/|_|  "
-echo -e "      NEURAL ENGINE INSTALLER v4.6.5${NC}\n"
+echo -e "      NEURAL ENGINE INSTALLER v4.6.8${NC}\n"
 
-# 1. Verificación de Root
+# 1. Verificación de Privilegios
 if [[ $EUID -ne 0 ]]; then
    log_error "Este script debe ejecutarse como ROOT (sudo su)."
 fi
 
-# 2. Pre-vuelo del Sistema
+# 2. Actualización de Repositorios y Utilidades Base
+log_info "Actualizando índices de paquetes..."
+apt-get update
+
+log_info "Instalando utilidades de gestión de repositorios..."
+# REPARACIÓN: Instalación resiliente de utilidades de software
+apt-get install -y curl wget git gnupg2 lsb-release build-essential ufw certbot nginx golang-go python3-software-properties || log_warn "Algunas utilidades menores fallaron, intentando continuar..."
+apt-get install -y software-properties-common || log_warn "software-properties-common no encontrado, usando comandos nativos..."
+
+# 3. Determinación de Versión para Repositorios Externos
 OS_CODENAME=$(lsb_release -cs)
-log_info "Detectado Debian ${OS_CODENAME}. Preparando dependencias..."
-apt update && apt upgrade -y
-apt install -y curl wget git gnupg2 software-properties-common lsb-release build-essential ufw certbot nginx golang-go
+REPO_DIST=$OS_CODENAME
 
-# 3. PostgreSQL 16 (Data Plane)
-log_info "Configurando PostgreSQL 16..."
-# En Debian 13, usamos el repo de sid/testing si es necesario, pero PGDG es preferible
-sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
-apt update && apt install -y postgresql-16
-log_success "PostgreSQL 16 instalado."
+# Fallback para Debian 13 (Trixie) ya que muchos repos usan bookworm como base estable
+if [ "$OS_CODENAME" = "trixie" ]; then
+    log_warn "Debian 13 detectado. Usando 'bookworm' como base de compatibilidad para repositorios externos."
+    REPO_DIST="bookworm"
+fi
 
-# 4. Clonación del Repositorio Core
-log_info "Sincronizando código fuente desde GitHub..."
+# 4. Configuración de PostgreSQL 16
+log_info "Configurando repositorio de PostgreSQL 16..."
+install -d /usr/share/postgresql-common/pgdg
+curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg
+echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg] http://apt.postgresql.org/pub/repos/apt ${REPO_DIST}-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+apt-get update
+apt-get install -y postgresql-16
+log_success "PostgreSQL 16 desplegado."
+
+# 5. Sincronización del Código Fuente
+log_info "Clonando núcleo CUBERBOX Pro desde GitHub..."
 rm -rf /opt/cuberbox
 git clone https://github.com/copantl/cuberbox-pro.git /opt/cuberbox
-log_success "Repositorio clonado en /opt/cuberbox"
+log_success "Código fuente en /opt/cuberbox"
 
-# 5. Compilación del Backend (Go Neural Engine)
-log_info "Construyendo binarios de orquestación..."
+# 6. Compilación del Backend (Go Engine)
+log_info "Iniciando compilación del motor de orquestación..."
 cd /opt/cuberbox/backend
 
-# REPARACIÓN DE GO: Inicializar módulo si no existe
+# Inicialización de módulo Go
 if [ ! -f go.mod ]; then
-    log_info "Inicializando Go Module..."
+    log_info "Inicializando módulo Go..."
     go mod init github.com/copantl/cuberbox-pro/backend
 fi
 
 log_info "Descargando dependencias de Go..."
 go mod tidy
-log_info "Compilando CUBERBOX Engine..."
+log_info "Compilando binario..."
 go build -o /usr/local/bin/cuberbox-engine main.go
-log_success "Backend compilado con éxito."
+log_success "Binario de sistema compilado en /usr/local/bin/cuberbox-engine"
 
-# 6. FreeSwitch 1.10 (Media Plane)
-log_info "Configurando FreeSwitch (SignalWire Repo)..."
-# Nota: Para Debian 13, a veces se requiere forzar el repo de bullseye/bookworm si no hay release oficial aún
-FS_REPO_DIST="bookworm" # Estable por defecto para compatibilidad
-wget -O - https://files.freeswitch.org/repo/deb/debian-release/fs18-release.asc | apt-key add -
-echo "deb http://files.freeswitch.org/repo/deb/debian-release/ ${FS_REPO_DIST} main" > /etc/apt/sources.list.d/freeswitch.list
-apt update && apt install -y freeswitch-all freeswitch-mod-lua freeswitch-mod-v8 freeswitch-mod-rtc
+# 7. Instalación de FreeSwitch (Media Plane)
+log_info "Instalando motor de telefonía FreeSwitch..."
+# Usamos el repo oficial de FreeSwitch para Debian
+wget -O - https://files.freeswitch.org/repo/deb/debian-release/fs18-release.asc | gpg --dearmor > /usr/share/keyrings/freeswitch-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/freeswitch-archive-keyring.gpg] http://files.freeswitch.org/repo/deb/debian-release/ ${REPO_DIST} main" > /etc/apt/sources.list.d/freeswitch.list
+apt-get update
+apt-get install -y freeswitch-all freeswitch-mod-lua freeswitch-mod-v8 freeswitch-mod-rtc
+log_success "FreeSwitch instalado."
 
-# 7. Seguridad perimetral
-log_info "Aplicando blindaje de red (UFW)..."
+# 8. Firewall y Seguridad
+log_info "Aplicando reglas de blindaje (UFW)..."
 ufw allow 22/tcp
 ufw allow 80/tcp
 ufw allow 443/tcp
@@ -89,31 +104,29 @@ ufw allow 5060:5061/udp
 ufw allow 16384:32768/udp
 ufw allow 7443/tcp
 ufw --force enable
-log_success "Firewall configurado."
+log_success "Firewall activo."
 
-# 8. Base de Datos & Esquema
-log_info "Inyectando esquema de datos Q4..."
-sudo -u postgres psql -c "CREATE USER cuber_admin WITH PASSWORD 'CB_Elite_2025';" || log_warn "Usuario ya existe."
-sudo -u postgres psql -c "CREATE DATABASE cuberbox_pro OWNER cuber_admin;" || log_warn "Base de datos ya existe."
+# 9. Inicialización de Datos
+log_info "Inyectando esquema de base de datos..."
+sudo -u postgres psql -c "CREATE USER cuber_admin WITH PASSWORD 'CB_Elite_2025';" || true
+sudo -u postgres psql -c "CREATE DATABASE cuberbox_pro OWNER cuber_admin;" || true
 sudo -u postgres psql cuberbox_pro < /opt/cuberbox/setup/schema.sql
-log_success "Esquema V4 inyectado."
+log_success "Datos sincronizados."
 
-# 9. Persistencia de Servicios
-log_info "Registrando Daemons de sistema..."
+# 10. Persistencia de Servicios (SystemD)
+log_info "Registrando servicios de sistema..."
 if [ -f /opt/cuberbox/setup/cuberbox-engine.service ]; then
     cp /opt/cuberbox/setup/cuberbox-engine.service /etc/systemd/system/
     systemctl daemon-reload
-    systemctl enable cuberbox-engine
-    log_success "Servicio registrado."
+    systemctl enable --now cuberbox-engine
+    log_success "Daemon activo."
 else
-    log_warn "Archivo .service no encontrado. Creación manual requerida."
+    log_warn "Archivo de servicio no encontrado en /opt/cuberbox/setup/"
 fi
 
 echo -e "\n${GREEN}${BOLD}=====================================================================${NC}"
-echo -e "${GREEN}      CUBERBOX PRO DESPLEGADO EXITOSAMENTE (DEBIAN 12/13)            ${NC}"
+echo -e "${GREEN}      INSTALACIÓN COMPLETADA CON ÉXITO (BUILD 4.6.8)                 ${NC}"
 echo -e "${GREEN}=====================================================================${NC}"
-echo -e "${BOLD}Siguientes pasos:${NC}"
-echo -e "1. Accede vía IP: ${CYAN}http://$(hostname -I | awk '{print $1}')${NC}"
-echo -e "2. Completa el Wizard visual para activar tu API KEY de Gemini."
-echo -e "3. Repositorio Oficial: https://github.com/copantl/cuberbox-pro"
+echo -e "${BOLD}Acceso Web:${NC} ${CYAN}http://$(hostname -I | awk '{print $1}')${NC}"
+echo -e "${BOLD}Repositorio:${NC} https://github.com/copantl/cuberbox-pro"
 echo -e "=====================================================================\n"

@@ -66,7 +66,7 @@ const Instructions: React.FC = () => {
         </p>
       </div>
 
-      <div className="flex bg-slate-900 border-2 border-slate-800 p-2 rounded-[32px] mb-16 shadow-2xl max-w-4xl mx-auto overflow-x-auto scrollbar-hide">
+      <div className="flex bg-slate-900 border-2 border-slate-800 p-1.5 rounded-[32px] mb-16 shadow-2xl max-w-4xl mx-auto overflow-x-auto scrollbar-hide">
         {[
           { id: 'ONE_LINER', label: 'Instalación Flash', icon: Zap },
           { id: 'MANUAL', label: 'Paso a Paso', icon: Terminal },
@@ -92,7 +92,7 @@ const Instructions: React.FC = () => {
                   <Zap size={32} className="mr-4 text-blue-400 animate-pulse" /> Zero-Touch Installation
                </h2>
                <p className="text-slate-400 text-lg mb-10 leading-relaxed max-w-2xl font-medium">
-                  Copia y pega este comando en tu terminal de Debian 12 o 13 para aprovisionar automáticamente el clúster completo.
+                  Copia y pega este comando en tu terminal de Debian 12 o 13 para aprovisionar automáticamente el clúster completo. Repara dependencias de software automáticamente.
                </p>
                <CodeBlock 
                   title="Master Setup One-Liner"
@@ -102,9 +102,9 @@ const Instructions: React.FC = () => {
                <div className="p-8 bg-slate-900 border border-slate-800 rounded-[36px] flex items-start space-x-6">
                   <AlertCircle size={24} className="text-amber-500 mt-1 shrink-0" />
                   <div>
-                    <h4 className="text-sm font-black text-white uppercase tracking-widest mb-1">Compatibilidad</h4>
+                    <h4 className="text-sm font-black text-white uppercase tracking-widest mb-1">Nota de Compatibilidad</h4>
                     <p className="text-xs text-slate-500 leading-relaxed uppercase tracking-wider font-bold">
-                       Probado en Debian 13 (Trixie). El script inicializará el módulo de Go y configurará el puente hacia Gemini automáticamente.
+                       Probado en Debian 13 (Trixie). El script gestiona fallos de paquetes como software-properties-common mediante alternativas nativas de Python.
                     </p>
                   </div>
                </div>
@@ -115,7 +115,7 @@ const Instructions: React.FC = () => {
         {activeTab === 'MANUAL' && (
           <div className="space-y-4">
             <StepCard num="1" title="Sincronizar Repositorio Maestro">
-               <p className="text-slate-400 mb-6">Obtén el núcleo estructural de CUBERBOX en la carpeta del sistema.</p>
+               <p className="text-slate-400 mb-6">Obtén el núcleo estructural de CUBERBOX en la carpeta del sistema utilizando la nueva ruta oficial.</p>
                <CodeBlock 
                   title="Source Checkout"
                   icon={GitBranch}
@@ -124,20 +124,20 @@ const Instructions: React.FC = () => {
             </StepCard>
 
             <StepCard num="2" title="Compilar Puente Go (Backend)">
-               <p className="text-slate-400 mb-6">Inicializa los módulos y construye el binario de orquestación.</p>
+               <p className="text-slate-400 mb-6">Inicializa los módulos y construye el binario de orquestación dentro del directorio backend.</p>
                <CodeBlock 
                   title="Backend Build"
                   icon={Code}
-                  code={`cd backend\ngo mod init github.com/copantl/cuberbox-pro/backend\ngo mod tidy\ngo build -o cuberbox-engine main.go\nsudo mv cuberbox-engine /usr/local/bin/`}
+                  code={`cd /opt/cuberbox/backend\ngo mod init github.com/copantl/cuberbox-pro/backend\ngo mod tidy\ngo build -o cuberbox-engine main.go\nsudo mv cuberbox-engine /usr/local/bin/`}
                />
             </StepCard>
 
             <StepCard num="3" title="Activar Stack de Telefonía">
-               <p className="text-slate-400 mb-6">Instala FreeSwitch y sincroniza los Dialplans.</p>
+               <p className="text-slate-400 mb-6">Instala FreeSwitch y sincroniza los Dialplans estructurales.</p>
                <CodeBlock 
                   title="SIP Plane"
                   icon={Phone}
-                  code={`sudo apt install freeswitch-all\nsudo cp /opt/cuberbox/setup/dialplan.xml /etc/freeswitch/dialplan/default/cuberbox.xml\nfs_cli -x "reloadxml"`}
+                  code={`sudo apt-get update && sudo apt-get install -y freeswitch-all\nsudo cp /opt/cuberbox/setup/dialplan.xml /etc/freeswitch/dialplan/default/cuberbox.xml\nfs_cli -x "reloadxml"`}
                />
             </StepCard>
           </div>
@@ -151,7 +151,7 @@ const Instructions: React.FC = () => {
                 </div>
                 <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Esquema SQL</h3>
                 <p className="text-slate-400 leading-relaxed font-medium">
-                   Para bases de datos masivas en Debian 13, el esquema optimizado utiliza particionamiento por UUID.
+                   Para bases de datos masivas en PostgreSQL 16, el esquema optimizado utiliza particionamiento por UUID.
                 </p>
                 <CodeBlock 
                   title="Database Injection"

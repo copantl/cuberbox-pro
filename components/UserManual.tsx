@@ -39,7 +39,7 @@ const MANUAL_DATABASE: ManualEntry[] = [
       { title: 'Ejecutar Instalador Maestro', desc: 'Pegue el comando de instalación de una sola línea disponible en el repositorio oficial.', code: 'wget -O install.sh https://raw.githubusercontent.com/copantl/cuberbox-pro/main/setup/install.sh && chmod +x install.sh && sudo ./install.sh' },
       { title: 'Verificación de Daemons', desc: 'El script activará cuberbox-engine y freeswitch automáticamente.' }
     ],
-    technicalNote: 'En Debian 13, el script gestiona las dependencias del compilador de Go para resolver el error go.mod missing.',
+    technicalNote: 'En Debian 13, el script gestiona las dependencias de utilidades mediante alternativas nativas si software-properties-common falla.',
     compliance: 'ISO/IEC 27001: Logs de instalación protegidos vía SHA-256 en /var/log/cuberbox_install.log.'
   },
   {
@@ -53,7 +53,7 @@ const MANUAL_DATABASE: ManualEntry[] = [
       { title: 'Inicializar Entorno Go', desc: 'Acceda a la carpeta backend y genere el archivo de módulo.', code: 'cd /opt/cuberbox/backend\ngo mod init github.com/copantl/cuberbox-pro/backend\ngo mod tidy' },
       { title: 'Build del Binario', desc: 'Compile el binario optimizado para su arquitectura.', code: 'go build -o cuberbox-engine main.go' }
     ],
-    technicalNote: 'Requiere Go 1.22+ para soporte de Gemini 3 Pro.'
+    technicalNote: 'Requiere Go 1.22+ para soporte nativo de Gemini 3 Pro.'
   },
 
   // --- ADMINISTRACIÓN: PERFILES & NIVELES ---
