@@ -36,10 +36,10 @@ const MANUAL_DATABASE: ManualEntry[] = [
     summary: 'Procedimiento estándar recomendado para desplegar el ecosistema CUBERBOX ELITE en un nodo maestro Debian 12 o 13.',
     steps: [
       { title: 'Conexión SSH', desc: 'Acceda a su terminal como usuario Root.' },
-      { title: 'Ejecutar Instalador Maestro', desc: 'Pegue el comando de instalación de una sola línea disponible en el repositorio oficial.', code: 'wget -O install.sh https://raw.githubusercontent.com/copantl/cuberbox-pro/main/setup/install.sh && chmod +x install.sh && sudo ./install.sh' },
+      { title: 'Ejecutar Instalador Maestro', desc: 'Pegue el comando de instalación de una sola línea. El script forzará la visibilidad de Git para permitir credenciales.', code: 'wget -O install.sh https://raw.githubusercontent.com/copantl/cuberbox-pro/main/setup/install.sh && chmod +x install.sh && sudo ./install.sh' },
       { title: 'Verificación de Daemons', desc: 'El script activará cuberbox-engine y freeswitch automáticamente.' }
     ],
-    technicalNote: 'En Debian 13, el script gestiona las dependencias de utilidades mediante alternativas nativas si software-properties-common falla.',
+    technicalNote: 'Si el repositorio es privado, el terminal solicitará su Token de Acceso Personal de GitHub.',
     compliance: 'ISO/IEC 27001: Logs de instalación protegidos vía SHA-256 en /var/log/cuberbox_install.log.'
   },
   {

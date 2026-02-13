@@ -89,10 +89,10 @@ const Instructions: React.FC = () => {
           <div className="space-y-12">
             <div className="glass p-12 rounded-[64px] border border-blue-500/20 bg-blue-600/5 mb-16 relative overflow-hidden">
                <h2 className="text-3xl font-black text-white uppercase tracking-tight flex items-center mb-8">
-                  <Zap size={32} className="mr-4 text-blue-400 animate-pulse" /> Zero-Touch Installation
+                  <Zap size={32} className="mr-4 text-blue-400 animate-pulse" /> Ultra-Stable Setup
                </h2>
                <p className="text-slate-400 text-lg mb-10 leading-relaxed max-w-2xl font-medium">
-                  Copia y pega este comando en tu terminal de Debian 12 o 13 para aprovisionar automáticamente el clúster completo. Repara dependencias de software automáticamente.
+                  Copia y pega este comando en tu terminal de Debian. Este instalador gestiona fallos de paquetes y solicita credenciales de Git si el repositorio es privado.
                </p>
                <CodeBlock 
                   title="Master Setup One-Liner"
@@ -102,9 +102,9 @@ const Instructions: React.FC = () => {
                <div className="p-8 bg-slate-900 border border-slate-800 rounded-[36px] flex items-start space-x-6">
                   <AlertCircle size={24} className="text-amber-500 mt-1 shrink-0" />
                   <div>
-                    <h4 className="text-sm font-black text-white uppercase tracking-widest mb-1">Nota de Compatibilidad</h4>
+                    <h4 className="text-sm font-black text-white uppercase tracking-widest mb-1">Nota de Git</h4>
                     <p className="text-xs text-slate-500 leading-relaxed uppercase tracking-wider font-bold">
-                       Probado en Debian 13 (Trixie). El script gestiona fallos de paquetes como software-properties-common mediante alternativas nativas de Python.
+                       Si el terminal le solicita Usuario/Password durante el proceso, ingrese su GitHub Personal Access Token (PAT).
                     </p>
                   </div>
                </div>
@@ -115,7 +115,7 @@ const Instructions: React.FC = () => {
         {activeTab === 'MANUAL' && (
           <div className="space-y-4">
             <StepCard num="1" title="Sincronizar Repositorio Maestro">
-               <p className="text-slate-400 mb-6">Obtén el núcleo estructural de CUBERBOX en la carpeta del sistema utilizando la nueva ruta oficial.</p>
+               <p className="text-slate-400 mb-6">Obtén el núcleo estructural de CUBERBOX utilizando la nueva ruta oficial.</p>
                <CodeBlock 
                   title="Source Checkout"
                   icon={GitBranch}
