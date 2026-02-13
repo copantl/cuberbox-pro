@@ -4,7 +4,8 @@ import {
   Save, RefreshCw, X, CheckCircle2, AlertTriangle, Cpu, 
   Zap, Info, Smartphone, Monitor, LayoutGrid, ArrowRightLeft,
   Lock, Terminal, ToggleRight, Share2, Server, Settings,
-  ArrowRight, ShieldCheck, Download, Code
+  ArrowRight, ShieldCheck, Download, Code, Signal, Wifi,
+  BarChart3, Layers
 } from 'lucide-react';
 import { HANode, HAConfig } from '../types';
 import { MOCK_HA_NODES, MOCK_HA_CONFIG } from '../constants';
@@ -14,7 +15,9 @@ const HAConfigPage: React.FC = () => {
   const { toast } = useToast();
   
   // --- ESTADOS DE DATOS ---
-  const [nodes, setNodes] = useState<HANode[]>(MOCK_HA_NODES);
+  const [nodes, setNodes] = useState<(HANode & { latency: number })[]>(
+    MOCK_HA_NODES.map(n => ({ ...n, latency: 12 + Math.floor(Math.random() * 20) }))
+  );
   const [config, setConfig] = useState<HAConfig>(MOCK_HA_CONFIG);
   
   // --- ESTADOS DE UI ---
@@ -22,6 +25,17 @@ const HAConfigPage: React.FC = () => {
   const [isTesting, setIsTesting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingNode, setEditingNode] = useState<Partial<HANode> | null>(null);
+
+  // --- HEARTBEAT SIMULATOR ---
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNodes(prev => prev.map(n => ({
+        ...n,
+        latency: n.status === 'ACTIVE' ? Math.max(8, n.latency + (Math.random() > 0.5 ? 2 : -2)) : 0
+      })));
+    }, 3000);
+    return () => clearInterval(timer);
+  }, []);
 
   // --- LOGICA DE NODOS ---
   const handleOpenModal = (node?: HANode) => {
@@ -46,9 +60,9 @@ const HAConfigPage: React.FC = () => {
       return;
     }
 
-    const finalNode = editingNode as HANode;
+    const finalNode = { ...editingNode, latency: 15 } as any;
     
-    // Si este nodo es primario, quitar la primacía a los demás
+    // Lógica de primacía única
     let updatedNodes = [...nodes];
     if (finalNode.isPrimary) {
       updatedNodes = updatedNodes.map(n => ({ ...n, isPrimary: false }));
@@ -62,65 +76,66 @@ const HAConfigPage: React.FC = () => {
     }
 
     setIsModalOpen(false);
-    toast(`Nodo ${finalNode.name} configurado en el pool.`, 'success');
+    toast(`Nodo ${finalNode.name} configurado en el pool HA.`, 'success');
   };
 
   const handleDeleteNode = (id: string) => {
     if (nodes.length <= 1) {
-      toast('Debe existir al menos un nodo en el clúster HA.', 'error');
+      toast('Debe existir al menos un nodo para garantizar HA.', 'error');
       return;
     }
     setNodes(nodes.filter(n => n.id !== id));
-    toast('Nodo removido del pool de balanceo.', 'warning');
+    toast('Nodo removido del clúster.', 'warning');
   };
 
-  // --- SIMULADOR DE FAILOVER ---
+  // --- SIMULADOR DE FAILOVER INTELIGENTE ---
   const handleTestFailover = async () => {
     setIsTesting(true);
-    toast('Iniciando protocolo de estrés: Simulando caída de MASTER...', 'warning', 'Failover Tester');
+    toast('Protocolo de estrés iniciado: Forzando caída de MASTER...', 'warning', 'Failover Engine');
     
     await new Promise(r => setTimeout(r, 2000));
     
-    // Simular caída
-    setNodes(prev => prev.map(n => n.isPrimary ? { ...n, status: 'DOWN' } : n));
-    toast('Nodo Maestro OFFLINE. Transfiriendo IP Virtual...', 'critical');
+    // 1. Matar primario
+    setNodes(prev => prev.map(n => n.isPrimary ? { ...n, status: 'DOWN', latency: 0 } : n));
+    toast('NODO MAESTRO OFFLINE. Transfiriendo Virtual IP...', 'critical');
 
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise(r => setTimeout(r, 2500));
 
-    // Simular elección de nuevo líder
+    // 2. Elegir nuevo líder basado en latencia y peso (Weight)
     setNodes(prev => {
-      let candidateFound = false;
-      return prev.map(n => {
-        if (n.status === 'ACTIVE' && !candidateFound) {
-          candidateFound = true;
-          return { ...n, isPrimary: true };
-        }
-        return n;
-      });
+      const candidates = prev.filter(n => n.status !== 'DOWN');
+      if (candidates.length === 0) return prev;
+      
+      const nextLeader = candidates.sort((a,b) => b.weight - a.weight)[0];
+      return prev.map(n => ({
+        ...n,
+        isPrimary: n.id === nextLeader.id,
+        status: n.id === nextLeader.id ? 'ACTIVE' : n.status
+      }));
     });
 
-    toast('Failover completado. Nodo de respaldo ha asumido la carga.', 'success');
+    toast('Failover exitoso. Tráfico re-enrutado vía VRRP.', 'success');
     setIsTesting(false);
 
-    // Auto-recuperación después de 8s para visualización
+    // Auto-recuperación simulada tras 10s
     setTimeout(() => {
-      setNodes(MOCK_HA_NODES);
-      toast('Nodo original recuperado. Rebalanceando tráfico...', 'info');
-    }, 8000);
+      setNodes(MOCK_HA_NODES.map(n => ({ ...n, latency: 15 })));
+      toast('Sincronización recuperada. Nodo 01 re-integrado.', 'info');
+    }, 10000);
   };
 
   const handleApplyGlobal = async () => {
     setIsSaving(true);
-    toast('Generando archivos de configuración Keepalived...', 'info');
-    await new Promise(r => setTimeout(r, 2000));
+    toast('Regenerando clúster Keepalived & HAProxy...', 'info');
+    await new Promise(r => setTimeout(r, 2500));
     setIsSaving(false);
-    toast('Estructura de Alta Disponibilidad sincronizada con el clúster.', 'success', 'Titan Sync');
+    toast('Topología de Alta Disponibilidad sellada.', 'success', 'Sync Core');
   };
 
-  // --- EXPORTACIÓN DE CONFIGURACIÓN REAL ---
   const handleExportConfig = () => {
     const haproxyConfig = `
-# CUBERBOX PRO - GENERATED HAPROXY CONFIG v5.1
+# CUBERBOX PRO - GENERATED HAPROXY CONFIG v5.1.5
+# Hash: ${Math.random().toString(36).substr(2, 32)}
 global
     log /dev/log local0
     maxconn 4096
@@ -140,37 +155,49 @@ frontend http-in
 backend cuberbox_nodes
     balance ${config.loadBalancerMode.toLowerCase().replace('_', '')}
     option httpchk GET /health
-${nodes.map(n => `    server ${n.name.replace(/\s+/g, '_')} ${n.ip}:80 check weight ${n.weight}`).join('\n')}
+${nodes.map(n => `    server ${n.name.replace(/\s+/g, '_')} ${n.ip}:80 check weight ${n.weight} ${n.isPrimary ? 'primary' : ''}`).join('\n')}
 
-# VIP Config (Keepalived)
-# Virtual IP: ${config.virtualIP}
-# Check Interval: ${config.healthCheckInterval}ms
+# VIP Config (Keepalived / VRRP)
+vrrp_instance VI_1 {
+    state MASTER
+    interface ${config.interface}
+    virtual_router_id 51
+    priority ${config.keepalivedPriority}
+    advert_int 1
+    virtual_ipaddress {
+        ${config.virtualIP}
+    }
+}
     `.trim();
 
     const element = document.createElement("a");
     const file = new Blob([haproxyConfig], {type: 'text/plain'});
     element.href = URL.createObjectURL(file);
-    element.download = "haproxy_cuberbox.cfg";
+    element.download = "cuberbox_ha_stack.cfg";
     document.body.appendChild(element);
     element.click();
-    toast('Archivo .cfg generado con éxito.', 'success');
+    toast('Configuración .cfg exportada.', 'success');
   };
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h2 className="text-3xl font-black text-white tracking-tighter uppercase flex items-center">
-            <Shield className="mr-4 text-blue-500" size={36} />
-            High Availability & Load Balancing
-          </h2>
-          <p className="text-slate-400 text-sm font-medium mt-1">Configuración del stack de redundancia L7 para el plano web y API.</p>
+        <div className="flex items-center space-x-6">
+           <div className="w-16 h-16 rounded-[28px] bg-blue-600 flex items-center justify-center text-white shadow-2xl shadow-blue-600/30 animate-glow">
+              <Shield size={32} />
+           </div>
+           <div>
+              <h2 className="text-4xl font-black text-white tracking-tighter uppercase leading-none">
+                Redundancia L7
+              </h2>
+              <p className="text-slate-400 text-sm font-medium mt-2">Gestión de Virtual IP y Load Balancing Bridge</p>
+           </div>
         </div>
         <div className="flex items-center space-x-4">
            <button 
              onClick={handleTestFailover}
              disabled={isTesting}
-             className={`flex items-center space-x-3 bg-slate-900 border-2 border-slate-800 hover:bg-slate-800 text-rose-500 px-8 py-4 rounded-[24px] font-black text-[10px] uppercase tracking-widest shadow-xl transition-all active:scale-95 disabled:opacity-50 ${isTesting ? 'animate-pulse' : ''}`}
+             className={`flex items-center space-x-3 bg-slate-900 border-2 border-slate-800 hover:bg-slate-800 text-rose-500 px-8 py-4 rounded-[28px] font-black text-[10px] uppercase tracking-widest shadow-xl transition-all active:scale-95 disabled:opacity-50 ${isTesting ? 'animate-pulse' : ''}`}
            >
              {isTesting ? <RefreshCw className="animate-spin" size={18} /> : <AlertTriangle size={18} />}
              <span>Test Failover</span>
@@ -178,7 +205,7 @@ ${nodes.map(n => `    server ${n.name.replace(/\s+/g, '_')} ${n.ip}:80 check wei
            <button 
             onClick={handleApplyGlobal}
             disabled={isSaving}
-            className="flex items-center space-x-3 bg-blue-600 hover:bg-blue-500 text-white px-10 py-4 rounded-[28px] font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-600/30 transition-all active:scale-95 disabled:opacity-50 group"
+            className="flex items-center space-x-3 bg-blue-600 hover:bg-blue-50 text-white px-10 py-4 rounded-[28px] font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-600/30 transition-all active:scale-95 disabled:opacity-50 group"
            >
              {isSaving ? <RefreshCw className="animate-spin" size={18} /> : <Save size={18} className="group-hover:scale-110 transition-transform" />}
              <span>Aplicar HA Stack</span>
@@ -191,13 +218,13 @@ ${nodes.map(n => `    server ${n.name.replace(/\s+/g, '_')} ${n.ip}:80 check wei
         <div className="col-span-12 lg:col-span-8 space-y-8">
            <div className="flex items-center justify-between px-2">
               <h3 className="text-xl font-black text-white uppercase tracking-tight flex items-center">
-                 <Server className="mr-3 text-blue-500" /> App Nodes Pool
+                 <Server className="mr-3 text-blue-500" /> Nodos en Pool de Balanceo
               </h3>
               <button 
                 onClick={() => handleOpenModal()}
                 className="text-[10px] font-black text-blue-400 uppercase tracking-widest hover:underline flex items-center group"
               >
-                 <Plus size={14} className="mr-1.5 group-hover:rotate-90 transition-transform" /> Añadir Nodo al Pool
+                 <Plus size={14} className="mr-1.5 group-hover:rotate-90 transition-transform" /> Añadir Nodo
               </button>
            </div>
 
@@ -231,7 +258,11 @@ ${nodes.map(n => `    server ${n.name.replace(/\s+/g, '_')} ${n.ip}:80 check wei
 
                    <div className="space-y-1 relative z-10 mb-10">
                       <h4 className="text-2xl font-black text-white uppercase tracking-tight truncate">{node.name}</h4>
-                      <p className="text-xs font-mono text-slate-500 font-bold tracking-widest uppercase">{node.ip}</p>
+                      <div className="flex items-center space-x-3">
+                         <p className="text-xs font-mono text-slate-500 font-bold tracking-widest uppercase">{node.ip}</p>
+                         <div className="h-1 w-1 rounded-full bg-slate-800"></div>
+                         <p className="text-xs font-mono text-blue-400 font-black tracking-widest">{node.latency}ms</p>
+                      </div>
                    </div>
 
                    <div className="mt-auto pt-8 border-t border-slate-800/50 flex justify-between items-center relative z-10">
@@ -253,21 +284,21 @@ ${nodes.map(n => `    server ${n.name.replace(/\s+/g, '_')} ${n.ip}:80 check wei
                  <Network size={200} />
               </div>
               <div className="p-4 rounded-3xl bg-blue-600/10 text-blue-400 border border-blue-500/20 shadow-inner group-hover:rotate-12 transition-transform">
-                 <Terminal size={32} />
+                 <Signal size={32} />
               </div>
               <div className="flex-1 relative z-10">
-                 <h4 className="text-xl font-black text-white uppercase tracking-tight mb-2">Monitor de Sincronización Web</h4>
+                 <h4 className="text-xl font-black text-white uppercase tracking-tight mb-2">Protocolo VRRP Core</h4>
                  <p className="text-xs text-slate-400 font-medium uppercase leading-relaxed tracking-wider max-w-2xl">
-                    CUBERBOX Pro utiliza <span className="text-blue-400 font-black">VRRP</span> para gestionar la Virtual IP compartida. Al detectar una falla en el nodo 01, el motor redirige automáticamente el tráfico al nodo de respaldo en menos de <span className="text-emerald-400 font-black">2.5 segundos</span>.
+                    CUBERBOX Pro utiliza <span className="text-blue-400 font-black">VRRP</span> para gestionar la Virtual IP compartida. El clúster está configurado para failover atómico en <span className="text-emerald-400 font-black">Nivel 2 y 3</span>.
                  </p>
                  <div className="flex space-x-12 mt-10">
                     <div className="space-y-1">
-                       <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Protocolo de Red</p>
-                       <p className="text-sm font-black text-white uppercase tracking-tight">Keepalived / HAProxy</p>
+                       <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">VIP Activa</p>
+                       <p className="text-sm font-black text-emerald-400 font-mono tracking-widest">{config.virtualIP}</p>
                     </div>
                     <div className="space-y-1">
-                       <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Virtual IP (VIP)</p>
-                       <p className="text-sm font-black text-emerald-400 font-mono tracking-widest">{config.virtualIP}</p>
+                       <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Interface Red</p>
+                       <p className="text-sm font-black text-white font-mono uppercase tracking-widest">{config.interface}</p>
                     </div>
                  </div>
               </div>
@@ -278,12 +309,12 @@ ${nodes.map(n => `    server ${n.name.replace(/\s+/g, '_')} ${n.ip}:80 check wei
         <div className="col-span-12 lg:col-span-4 space-y-8">
            <div className="glass p-10 rounded-[56px] border border-slate-700/50 shadow-2xl flex flex-col space-y-10">
               <h3 className="text-xl font-black text-white uppercase tracking-tight flex items-center">
-                 <Settings className="mr-3 text-blue-400" /> HA Stack Engine
+                 <Settings className="mr-3 text-blue-400" size={24} /> HA Stack Engine
               </h3>
               
               <div className="space-y-8">
                  <div className="space-y-4">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Load Balancing Algorithm</label>
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Algoritmo de Balanceo</label>
                     <select 
                       value={config.loadBalancerMode}
                       onChange={e => setConfig({...config, loadBalancerMode: e.target.value as any})}
@@ -297,7 +328,7 @@ ${nodes.map(n => `    server ${n.name.replace(/\s+/g, '_')} ${n.ip}:80 check wei
 
                  <div className="space-y-4 p-8 bg-slate-900 border-2 border-slate-800 rounded-[40px] shadow-inner">
                     <div className="flex justify-between items-center mb-2">
-                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Health Check Interval</label>
+                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Intervalo Heartbeat</label>
                        <span className="text-lg font-black text-emerald-400 font-mono">{config.healthCheckInterval}ms</span>
                     </div>
                     <input 
@@ -313,11 +344,11 @@ ${nodes.map(n => `    server ${n.name.replace(/\s+/g, '_')} ${n.ip}:80 check wei
                        <Lock size={12} className="mr-2 text-rose-500" /> SSL Termination
                     </h4>
                     <div className="flex items-center justify-between p-4 bg-slate-950 rounded-2xl border border-slate-800">
-                       <span className="text-[10px] font-black text-slate-300 uppercase">Let's Encrypt Auto-Renew</span>
+                       <span className="text-[10px] font-black text-slate-300 uppercase">Auto-Renew SSL</span>
                        <button className="w-10 h-5 bg-blue-600 rounded-full relative"><div className="absolute right-1 top-1 w-3 h-3 bg-white rounded-full"></div></button>
                     </div>
                     <div className="flex items-center justify-between p-4 bg-slate-950 rounded-2xl border border-slate-800">
-                       <span className="text-[10px] font-black text-slate-300 uppercase">HSTS Hardening</span>
+                       <span className="text-[10px] font-black text-slate-300 uppercase">HSTS Shield</span>
                        <button className="w-10 h-5 bg-emerald-600 rounded-full relative"><div className="absolute right-1 top-1 w-3 h-3 bg-white rounded-full"></div></button>
                     </div>
                  </div>
@@ -328,7 +359,7 @@ ${nodes.map(n => `    server ${n.name.replace(/\s+/g, '_')} ${n.ip}:80 check wei
                       className="w-full py-5 rounded-[28px] bg-slate-950 border-2 border-slate-800 text-blue-400 hover:bg-blue-600 hover:text-white transition-all font-black text-[10px] uppercase tracking-[0.3em] active:scale-95 flex items-center justify-center space-x-3 shadow-xl group"
                     >
                        <Download size={18} className="group-hover:translate-y-1 transition-transform" />
-                       <span>Export HAProxy Config</span>
+                       <span>Exportar Configuración</span>
                     </button>
                  </div>
               </div>
@@ -365,7 +396,7 @@ ${nodes.map(n => `    server ${n.name.replace(/\s+/g, '_')} ${n.ip}:80 check wei
                     />
                  </div>
                  <div className="space-y-4">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Dirección IP (Interna/Private)</label>
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Dirección IP</label>
                     <input 
                       type="text" 
                       value={editingNode.ip} 
@@ -387,7 +418,7 @@ ${nodes.map(n => `    server ${n.name.replace(/\s+/g, '_')} ${n.ip}:80 check wei
                     <div className="space-y-4 flex flex-col justify-end">
                        <button 
                          onClick={() => setEditingNode({...editingNode, isPrimary: !editingNode.isPrimary})}
-                         className={`w-full py-4 rounded-[24px] border-2 transition-all font-black text-[10px] uppercase tracking-widest flex items-center justify-center space-x-2 ${editingNode.isPrimary ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-600'}`}
+                         className={`w-full py-4 rounded-[24px] border-2 transition-all font-black text-[10px] uppercase tracking-widest flex items-center justify-center space-x-2 ${editingNode.isPrimary ? 'bg-blue-600 border-blue-500 text-white shadow-xl' : 'bg-slate-900 border-slate-800 text-slate-600'}`}
                        >
                           <Shield size={14} />
                           <span>Nodo Maestro</span>
@@ -396,7 +427,11 @@ ${nodes.map(n => `    server ${n.name.replace(/\s+/g, '_')} ${n.ip}:80 check wei
                  </div>
               </div>
 
-              <div className="p-10 bg-slate-900/60 border-t border-slate-800 flex justify-end items-center">
+              <div className="p-10 bg-slate-900/60 border-t border-slate-800 flex justify-end items-center space-x-4">
+                <div className="flex items-center space-x-3 text-[10px] font-black text-slate-500 uppercase italic opacity-60">
+                   <ShieldCheck size={18} className="text-emerald-500" />
+                   <span>Certificado TLS Sync</span>
+                </div>
                 <button onClick={handleSaveNode} className="flex items-center space-x-4 bg-blue-600 hover:bg-blue-500 text-white px-12 py-5 rounded-[24px] font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-blue-600/30 transition-all active:scale-95 group">
                    <Save size={18} className="group-hover:scale-110 transition-transform" />
                    <span>Sellar Nodo</span>

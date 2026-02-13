@@ -3,9 +3,10 @@ import {
   Server, Plus, Trash2, Edit2, ShieldCheck, RefreshCw, Globe, Key, 
   Activity, Zap, Info, CheckCircle2, Terminal, Network, X, Save,
   Cpu, Database, Shield, Layers, HardDrive, Smartphone, Radio, 
-  Search, GitBranch, Cloud, Power, Signal,
-  // Added missing imports to fix errors on lines 190 and 321
-  ChevronRight, ArrowRight
+  Search, GitBranch, Cloud, Power, Signal, ChevronRight, ArrowRight,
+  Wifi, ShieldAlert, ZapOff, CheckCircle,
+  // Added missing Clock import
+  Clock
 } from 'lucide-react';
 import { ClusterNode, NodeRole, SyncStatus } from '../types';
 import { useToast } from '../ToastContext';
@@ -13,9 +14,11 @@ import Logo from './Logo';
 
 const ClusterProvisioning: React.FC = () => {
   const { toast } = useToast();
-  const [nodes, setNodes] = useState<ClusterNode[]>([
-    { id: 'n1', name: 'Master Titan-01', ip: '10.0.0.10', role: 'MASTER', status: 'ONLINE', cpu: 12, mem: 4.5, channels: 1500, threads: 450, dbLatency: 1, lastSync: 'Ahora' },
-    { id: 'n2', name: 'Media SIP-West', ip: '10.0.0.42', role: 'MEDIA', status: 'ONLINE', cpu: 22, mem: 8.1, channels: 840, threads: 890, dbLatency: 4, lastSync: 'Hace 5m' },
+  
+  // Estado de los nodos con metadatos de sincronización
+  const [nodes, setNodes] = useState<(ClusterNode & { syncProgress: number, isSyncing: boolean })[]>([
+    { id: 'n1', name: 'Master Titan-01', ip: '10.0.0.10', role: 'MASTER', status: 'ONLINE', cpu: 12, mem: 4.5, channels: 1500, threads: 450, dbLatency: 1, lastSync: 'Hoy 10:20 AM', syncProgress: 100, isSyncing: false },
+    { id: 'n2', name: 'Media SIP-West', ip: '10.0.0.42', role: 'MEDIA', status: 'ONLINE', cpu: 22, mem: 8.1, channels: 840, threads: 890, dbLatency: 4, lastSync: 'Hoy 09:15 AM', syncProgress: 100, isSyncing: false },
   ]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -26,8 +29,19 @@ const ClusterProvisioning: React.FC = () => {
     sshPort: 22,
   });
 
-  const [isSyncingGlobal, setIsSyncingGlobal] = useState<SyncStatus>('IDLE');
-  const [provisioningNodeId, setProvisioningNodeId] = useState<string | null>(null);
+  const [isGlobalSyncing, setIsGlobalSyncing] = useState(false);
+
+  // Efecto de telemetría (Ping simulado)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNodes(prev => prev.map(n => ({
+        ...prev.find(x => x.id === n.id)!,
+        dbLatency: Math.max(1, n.dbLatency + (Math.random() > 0.5 ? 1 : -1)),
+        cpu: Math.max(2, Math.min(95, n.cpu + (Math.random() > 0.5 ? 2 : -2)))
+      } as any)));
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleAddServer = async () => {
     if (!newNode.name || !newNode.ip) {
@@ -35,7 +49,7 @@ const ClusterProvisioning: React.FC = () => {
       return;
     }
 
-    const node: ClusterNode = {
+    const node: any = {
       id: `n_${Math.random().toString(36).substr(2, 5)}`,
       name: newNode.name,
       ip: newNode.ip,
@@ -46,63 +60,74 @@ const ClusterProvisioning: React.FC = () => {
       channels: 0,
       threads: 0,
       dbLatency: 0,
-      sshPort: newNode.sshPort
+      sshPort: newNode.sshPort,
+      syncProgress: 0,
+      isSyncing: true
     };
 
     setNodes([...nodes, node]);
     setIsModalOpen(false);
     setNewNode({ name: '', ip: '', role: 'MEDIA', sshPort: 22 });
     
-    // Iniciar secuencia de aprovisionamiento
-    setProvisioningNodeId(node.id);
-    toast(`Iniciando despliegue de TITAN v5.1 en ${node.name}...`, 'info', 'Auto-Provisioning');
+    toast(`Inyectando Titan Engine en ${node.name}...`, 'info', 'Titan Forge');
     
-    await new Promise(r => setTimeout(r, 4000));
+    // Simular pasos de aprovisionamiento
+    for (let i = 0; i <= 100; i += 20) {
+      await new Promise(r => setTimeout(r, 800));
+      setNodes(prev => prev.map(n => n.id === node.id ? { ...n, syncProgress: i } : n));
+    }
     
-    setNodes(prev => prev.map(n => n.id === node.id ? { ...n, status: 'ONLINE', cpu: 4, mem: 1.2, threads: 120 } : n));
-    setProvisioningNodeId(null);
-    toast(`Servidor ${node.name} provisionado y enlazado al clúster.`, 'success');
+    setNodes(prev => prev.map(n => n.id === node.id ? { ...n, status: 'ONLINE', cpu: 5, mem: 1.2, threads: 120, isSyncing: false, lastSync: 'Recién provisionado' } : n));
+    toast(`Servidor ${node.name} activo y sincronizado.`, 'success');
+  };
+
+  const handleSyncNode = async (nodeId: string) => {
+    toast('Iniciando sincronización atómica de DialPlan...', 'info');
+    setNodes(prev => prev.map(n => n.id === nodeId ? { ...n, isSyncing: true, syncProgress: 0 } : n));
+    
+    for (let i = 0; i <= 100; i += 25) {
+      await new Promise(r => setTimeout(r, 500));
+      setNodes(prev => prev.map(n => n.id === nodeId ? { ...n, syncProgress: i } : n));
+    }
+
+    setNodes(prev => prev.map(n => n.id === nodeId ? { ...n, isSyncing: false, lastSync: 'Ahora mismo' } : n));
+    toast('Nodo sincronizado con el Master.', 'success');
   };
 
   const handleGlobalSync = async () => {
-    setIsSyncingGlobal('SYNCING');
-    toast('Propagando configuraciones DialPlan y DB a todos los nodos...', 'info', 'Titan Sync');
+    setIsGlobalSyncing(true);
+    toast('Propagando configuraciones globales a todos los nodos...', 'warning', 'Titan Cloud Sync');
     
-    await new Promise(r => setTimeout(r, 3000));
+    const syncPromises = nodes.map(n => handleSyncNode(n.id));
+    await Promise.all(syncPromises);
     
-    setIsSyncingGlobal('SUCCESS');
-    setNodes(prev => prev.map(n => ({ ...n, lastSync: 'Ahora' })));
+    setIsGlobalSyncing(false);
     toast('Clúster sincronizado globalmente.', 'success');
-    
-    setTimeout(() => setIsSyncingGlobal('IDLE'), 2000);
-  };
-
-  const handleDeleteNode = (id: string) => {
-    if (confirm('¿Deseas desvincular este servidor del clúster? El tráfico será redirigido.')) {
-      setNodes(nodes.filter(n => n.id !== id));
-      toast('Servidor removido de la topología.', 'warning');
-    }
   };
 
   return (
     <div className="space-y-10 animate-in fade-in duration-1000 pb-20">
       {/* HEADER TÁCTICO */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h2 className="text-4xl font-black text-white tracking-tighter uppercase flex items-center">
-            <Layers className="mr-4 text-blue-500" size={36} />
-            Orquestador Elástico
-          </h2>
-          <p className="text-slate-400 text-sm font-medium mt-1 uppercase tracking-widest opacity-60">Gestión de Topología y Aprovisionamiento Global</p>
+        <div className="flex items-center space-x-6">
+           <div className="w-16 h-16 rounded-[28px] bg-blue-600 flex items-center justify-center text-white shadow-2xl shadow-blue-600/30">
+              <Layers size={32} />
+           </div>
+           <div>
+              <h2 className="text-4xl font-black text-white tracking-tighter uppercase leading-none">
+                Orquestador Titan
+              </h2>
+              <p className="text-slate-400 text-sm font-medium mt-2 uppercase tracking-widest opacity-60">Control de Topología v5.1.5</p>
+           </div>
         </div>
         <div className="flex items-center space-x-4">
            <button 
              onClick={handleGlobalSync}
-             disabled={isSyncingGlobal === 'SYNCING'}
-             className={`flex items-center space-x-3 px-8 py-4 rounded-[28px] font-black text-[11px] uppercase tracking-widest transition-all shadow-xl active:scale-95 border-2 ${isSyncingGlobal === 'SUCCESS' ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-slate-900 border-slate-800 text-blue-400 hover:border-blue-500/50'}`}
+             disabled={isGlobalSyncing}
+             className="flex items-center space-x-3 px-8 py-4 rounded-[28px] font-black text-[11px] uppercase tracking-widest transition-all shadow-xl active:scale-95 border-2 bg-slate-900 border-slate-800 text-blue-400 hover:border-blue-500/50 disabled:opacity-50"
            >
-             {isSyncingGlobal === 'SYNCING' ? <RefreshCw className="animate-spin" size={18} /> : isSyncingGlobal === 'SUCCESS' ? <CheckCircle2 size={18} /> : <Zap size={18} />}
-             <span>{isSyncingGlobal === 'SYNCING' ? 'Sincronizando Nodos...' : isSyncingGlobal === 'SUCCESS' ? 'Sync Completado' : 'Propagar Configuración'}</span>
+             {isGlobalSyncing ? <RefreshCw className="animate-spin" size={18} /> : <Zap size={18} />}
+             <span>{isGlobalSyncing ? 'Sincronizando Todo...' : 'Sincronización Global'}</span>
            </button>
            <button 
              onClick={() => setIsModalOpen(true)}
@@ -117,17 +142,11 @@ const ClusterProvisioning: React.FC = () => {
       {/* NODES GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
         {nodes.map(node => (
-          <div key={node.id} className={`glass p-10 rounded-[64px] border-2 transition-all relative overflow-hidden group ${node.status === 'PROVISIONING' ? 'border-amber-500/30 bg-amber-500/5' : 'border-slate-800 hover:border-blue-500/30 shadow-2xl'}`}>
+          <div key={node.id} className={`glass p-10 rounded-[64px] border-2 transition-all relative overflow-hidden group ${node.isSyncing ? 'border-blue-500/50 bg-blue-500/5 shadow-blue-500/10' : 'border-slate-800 hover:border-blue-500/30 shadow-2xl'}`}>
              
-             {node.status === 'PROVISIONING' && (
-                <div className="absolute inset-0 z-20 bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-center space-y-6 text-center p-8">
-                   <div className="relative">
-                      <div className="w-20 h-20 border-4 border-amber-500/10 border-t-amber-500 rounded-full animate-spin"></div>
-                      <Terminal size={32} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-amber-400 animate-pulse" />
-                   </div>
-                   <h4 className="text-xl font-black text-white uppercase tracking-widest">Provisioning...</h4>
-                   <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Inyectando Titan Core v5.1</p>
-                </div>
+             {/* Progress Bar Overlay for Sync */}
+             {node.isSyncing && (
+                <div className="absolute bottom-0 left-0 h-1.5 bg-blue-500 shadow-[0_0_15px_#3b82f6] transition-all duration-500" style={{ width: `${node.syncProgress}%` }}></div>
              )}
 
              <div className="flex justify-between items-start mb-10">
@@ -138,26 +157,33 @@ const ClusterProvisioning: React.FC = () => {
                    <div>
                       <h3 className="text-2xl font-black text-white uppercase tracking-tighter">{node.name}</h3>
                       <div className="flex items-center space-x-2 mt-1">
-                         <div className={`w-2 h-2 rounded-full ${node.status === 'ONLINE' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-700'}`}></div>
+                         <div className={`w-2 h-2 rounded-full ${node.status === 'ONLINE' ? 'bg-emerald-500 animate-pulse' : node.status === 'PROVISIONING' ? 'bg-amber-500 animate-spin' : 'bg-slate-700'}`}></div>
                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{node.role} • {node.status}</span>
                       </div>
                    </div>
                 </div>
-                <div className="flex space-x-2 opacity-0 group-hover:opacity-100 transition-all">
-                   <button className="p-3 bg-slate-900 border border-slate-800 rounded-xl text-slate-500 hover:text-white transition-all"><Edit2 size={16} /></button>
-                   <button onClick={() => handleDeleteNode(node.id)} className="p-3 bg-slate-900 border border-slate-800 rounded-xl text-slate-500 hover:text-rose-500 transition-all"><Trash2 size={16} /></button>
+                <div className="flex space-x-1">
+                   <button 
+                    onClick={() => handleSyncNode(node.id)}
+                    className={`p-3 bg-slate-900 border border-slate-800 rounded-xl text-slate-500 hover:text-blue-400 transition-all ${node.isSyncing ? 'animate-spin text-blue-400' : ''}`}
+                   >
+                     <RefreshCw size={16} />
+                   </button>
+                   <button onClick={() => setNodes(nodes.filter(n => n.id !== node.id))} className="p-3 bg-slate-900 border border-slate-800 rounded-xl text-slate-500 hover:text-rose-500 transition-all">
+                     <Trash2 size={16} />
+                   </button>
                 </div>
              </div>
 
              <div className="p-6 bg-slate-950/60 rounded-[40px] border border-slate-900 space-y-8 shadow-inner mb-8">
                 <div className="flex justify-between items-center px-2">
                    <div className="flex flex-col">
-                      <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Host / Interface</span>
+                      <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Host IP</span>
                       <span className="text-sm font-mono font-black text-blue-400">{node.ip}</span>
                    </div>
                    <div className="flex flex-col text-right">
-                      <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Uptime</span>
-                      <span className="text-sm font-mono font-black text-white">14d 08h</span>
+                      <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Latencia DB</span>
+                      <span className={`text-sm font-mono font-black ${node.dbLatency > 5 ? 'text-amber-400' : 'text-emerald-400'}`}>{node.dbLatency}ms</span>
                    </div>
                 </div>
 
@@ -168,25 +194,26 @@ const ClusterProvisioning: React.FC = () => {
                          <span className="text-white">{node.cpu}%</span>
                       </div>
                       <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden">
-                         <div className="h-full bg-blue-500 shadow-[0_0_10px_#3b82f6]" style={{ width: `${node.cpu}%` }}></div>
+                         <div className={`h-full transition-all duration-700 ${node.cpu > 80 ? 'bg-rose-500' : 'bg-blue-500'}`} style={{ width: `${node.cpu}%` }}></div>
                       </div>
                    </div>
                    <div className="space-y-2">
                       <div className="flex justify-between text-[8px] font-black text-slate-600 uppercase">
-                         <span>SIP CHANNELS</span>
-                         <span className="text-white">{node.channels}</span>
+                         <span>THREADS</span>
+                         <span className="text-white">{node.threads}</span>
                       </div>
                       <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden">
-                         <div className="h-full bg-emerald-500" style={{ width: `${(node.channels / 2000) * 100}%` }}></div>
+                         <div className="h-full bg-indigo-500" style={{ width: `${(node.threads / 1000) * 100}%` }}></div>
                       </div>
                    </div>
                 </div>
              </div>
 
              <div className="flex items-center justify-between pt-6 border-t border-slate-800/50">
-                <div className="flex items-center space-x-3 text-[9px] font-black text-slate-600 uppercase">
-                   <RefreshCw size={12} className="text-emerald-500" />
-                   <span>Last Sync: {node.lastSync}</span>
+                <div className="flex items-center space-x-2">
+                   {/* Added missing Clock import */}
+                   <Clock size={12} className="text-slate-600" />
+                   <span className="text-[9px] font-black text-slate-600 uppercase">Sync: {node.lastSync}</span>
                 </div>
                 <button className="text-[10px] font-black text-blue-500 hover:text-white uppercase tracking-widest flex items-center group/btn">
                    Terminal <ChevronRight size={14} className="ml-1 group-hover/btn:translate-x-1 transition-transform" />
@@ -208,37 +235,28 @@ const ClusterProvisioning: React.FC = () => {
         </div>
       </div>
 
-      {/* FOOTER INFO */}
-      <div className="p-10 glass rounded-[56px] border border-blue-500/20 bg-blue-600/5 flex flex-col md:flex-row items-center justify-between gap-10 shadow-2xl relative overflow-hidden group">
-         <div className="absolute top-0 right-0 p-12 opacity-5 text-blue-400 group-hover:scale-110 transition-transform duration-1000">
-            <Network size={300} />
+      {/* FOOTER SYSTEM HEALTH */}
+      <div className="p-10 glass rounded-[56px] border border-emerald-500/20 bg-emerald-500/5 flex flex-col md:flex-row items-center justify-between gap-10 shadow-2xl relative overflow-hidden group">
+         <div className="absolute top-0 right-0 p-12 opacity-5 text-emerald-400 group-hover:scale-110 transition-transform duration-1000">
+            <Shield size={300} />
          </div>
          <div className="flex items-center space-x-8 relative z-10">
-            <div className="p-6 rounded-[32px] bg-blue-600 flex items-center justify-center text-white shadow-2xl animate-pulse">
+            <div className="p-6 rounded-[32px] bg-emerald-600 flex items-center justify-center text-white shadow-2xl animate-pulse">
                <ShieldCheck size={40} />
             </div>
             <div>
-               <h4 className="text-2xl font-black text-white uppercase tracking-tight">Capa de Sincronización Global v5.1</h4>
+               <h4 className="text-2xl font-black text-white uppercase tracking-tight">Capa de Sincronización Titan v5.1</h4>
                <p className="text-sm text-slate-400 max-w-2xl mt-2 leading-relaxed font-medium uppercase tracking-wider">
-                  El motor Titan gestiona la consistencia eventual entre nodos. Al sincronizar el clúster, los cambios de DialPlan y configuraciones de red se propagan de forma atómica a todos los servidores <span className="text-blue-400 font-black">MEDIA</span> y <span className="text-emerald-400 font-black">DATABASE</span>.
+                  El protocolo de clúster garantiza que cada cambio en el Master se propague a los nodos esclavos en menos de <span className="text-emerald-400 font-black">500ms</span>. Todos los servicios de red están <span className="text-emerald-400 font-black">NOMINALES</span>.
                </p>
-            </div>
-         </div>
-         <div className="flex items-center space-x-4 relative z-10">
-            <div className="text-right">
-               <p className="text-xs font-black text-slate-500 uppercase tracking-widest">Health Consensus</p>
-               <p className="text-2xl font-black text-emerald-400 uppercase tracking-tight">100% NOMINAL</p>
-            </div>
-            <div className="w-16 h-16 rounded-full border-4 border-emerald-500/20 flex items-center justify-center p-1">
-               <div className="w-full h-full rounded-full bg-emerald-500 shadow-[0_0_20px_#10b981] animate-pulse"></div>
             </div>
          </div>
       </div>
 
       {/* MODAL: ADD SERVER */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[250] flex items-center justify-center p-6 bg-slate-950/95 backdrop-blur-2xl animate-in fade-in duration-300">
-           <div className="relative w-full max-w-2xl glass rounded-[64px] border border-slate-700/50 shadow-[0_0_150px_rgba(59,130,246,0.2)] overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col">
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-6 bg-slate-950/95 backdrop-blur-xl animate-in fade-in duration-300">
+           <div className="relative w-full max-w-2xl glass rounded-[64px] border border-slate-700/50 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col">
               <div className="p-10 border-b border-slate-800 bg-slate-900/60 flex items-center justify-between shrink-0 shadow-lg">
                  <div className="flex items-center space-x-6">
                     <div className="w-16 h-16 rounded-[24px] bg-blue-600/10 flex items-center justify-center text-blue-400 border border-blue-500/20 shadow-inner">
@@ -310,14 +328,14 @@ const ClusterProvisioning: React.FC = () => {
                  </div>
               </div>
 
-              <div className="p-10 bg-slate-900/60 border-t border-slate-800 flex justify-end items-center space-x-8 shadow-2xl">
+              <div className="p-10 bg-slate-900/60 border-t border-slate-800 flex justify-end items-center space-x-8 shadow-2xl shrink-0">
                  <div className="flex items-center space-x-3 text-[10px] font-black text-slate-500 uppercase tracking-widest italic opacity-60">
                     <ShieldCheck size={18} className="text-emerald-500" />
                     <span>Inyección Vía SSH-Key (Titan Protocol)</span>
                  </div>
                  <button 
                    onClick={handleAddServer} 
-                   className="bg-blue-600 hover:bg-blue-500 text-white px-12 py-5 rounded-[32px] font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-blue-600/30 transition-all active:scale-95 flex items-center space-x-4 group"
+                   className="bg-blue-600 hover:bg-blue-500 text-white px-12 py-5 rounded-[28px] font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-blue-600/30 transition-all active:scale-95 flex items-center space-x-4 group"
                  >
                     <span>Lanzar Nodo</span>
                     <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
