@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Bell, Search, Globe, Power, Sun, Moon, Droplets, Box, Trees, Sunset, Zap, Layout, ShieldCheck, Activity } from 'lucide-react';
 import { User, ThemeType } from '../types';
@@ -49,7 +48,7 @@ const Header: React.FC<HeaderProps> = ({ user, currentTheme, onThemeToggle, onLo
               <ShieldCheck size={18} className="text-emerald-500" />
               <div className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full animate-ping"></div>
            </div>
-           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Engine v4.6</span>
+           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Engine v4.9.1 (VANGUARD)</span>
         </div>
       </div>
 
