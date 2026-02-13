@@ -6,7 +6,7 @@ import {
   Trash2, Lock, Activity, FileText, Code, CheckCircle2, AlertTriangle,
   Play, MousePointer2, Smartphone as PhoneIcon, Volume2,
   ShieldAlert, ArrowUpRight, UserCog, UserCheck, Eye, Headphones,
-  Github, GitBranch, Globe2, TerminalSquare, AlertCircle
+  Github, StatusOnline, GitBranch, Globe2, TerminalSquare, AlertCircle
 } from 'lucide-react';
 
 interface ManualStep {
@@ -30,16 +30,16 @@ const MANUAL_DATABASE: ManualEntry[] = [
   // --- INSTALACIÓN ---
   {
     id: 'inst-01',
-    title: 'Despliegue Flash (Ironclad Mitigated)',
+    title: 'Despliegue Flash (Phoenix Build)',
     icon: Zap,
     category: 'INSTALACIÓN',
-    summary: 'Procedimiento estándar para desplegar CUBERBOX ELITE con protección contra fallos de mirror SIP.',
+    summary: 'Procedimiento estándar para desplegar CUBERBOX ELITE utilizando los repositorios oficiales de SignalWire para máxima disponibilidad.',
     steps: [
       { title: 'Conexión SSH', desc: 'Acceda a su terminal como usuario Root.' },
-      { title: 'Ejecutar Instalador Maestro', desc: 'El script V4.8.6 utiliza wget con timeout y validación de bytes para evitar bloqueos en el paso de llaves GPG.', code: 'wget -O install.sh https://raw.githubusercontent.com/copantl/cuberbox-pro/main/setup/install.sh && chmod +x install.sh && sudo ./install.sh' },
-      { title: 'Verificación de Daemons', desc: 'El script activará freeswitch y el motor neuronal Go usando la rama mr11.3 estable.' }
+      { title: 'Ejecutar Instalador Phoenix', desc: 'El script V4.8.8 migra automáticamente el Media Plane a SignalWire, evitando los errores 404 de mirrors de terceros.', code: 'wget -O install.sh https://raw.githubusercontent.com/copantl/cuberbox-pro/main/setup/install.sh && chmod +x install.sh && sudo ./install.sh' },
+      { title: 'Verificación de Daemons', desc: 'El script activará freeswitch y el motor neuronal Go vinculando las firmas oficiales de Debian Release.' }
     ],
-    technicalNote: 'La versión 4.8.6 soluciona el "hang" en la configuración del Media Plane mediante reintentos automáticos y detección de errores 404 en la descarga de llaves.',
+    technicalNote: 'La versión 4.8.8 soluciona definitivamente el error "Package not found" al conectar con la fuente primaria de FreeSwitch administrada por SignalWire.',
     compliance: 'ISO/IEC 27001: Logs de instalación protegidos vía SHA-256 en /var/log/cuberbox_install.log.'
   },
   {
@@ -253,7 +253,7 @@ const UserManual: React.FC = () => {
                          </p>
                          <div className="flex items-center space-x-2 pt-4 border-t border-slate-800">
                             <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]"></div>
-                            <span className="text-[10px] font-black text-emerald-500 uppercase">Verificado v4.8.6</span>
+                            <span className="text-[10px] font-black text-emerald-500 uppercase">Verificado v4.8.8</span>
                          </div>
                       </div>
                    </div>

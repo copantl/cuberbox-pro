@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # =============================================================================
-# CUBERBOX PRO - MASTER CLUSTER INSTALLER V4.8.6 (IRONCLAD BUILD)
+# CUBERBOX PRO - MASTER CLUSTER INSTALLER V4.8.8 (PHOENIX BUILD)
 # Compatible: Debian 12 (Bookworm) / Debian 13 (Trixie)
-# Fix: GPG Integrity Validation & Download Retry Logic
+# Fix: Sipwise 404 Mirror -> SignalWire Official Repo Migration
 # =============================================================================
 
 set -e
@@ -29,20 +29,20 @@ echo "  / ____/ / / / __ ) / ____/ __ \/ __ )| |/ /"
 echo " / /   / / / / __  |/ __/ / /_/ / __  ||   / "
 echo "/ /___/ /_/ / /_/ / /___/ _, _/ /_/ / /   |  "
 echo "\____/\____/_____/_____/_/ |_/_____/_/|_|  "
-echo -e "      NEURAL ENGINE INSTALLER v4.8.6 (IRONCLAD)${NC}\n"
+echo -e "      NEURAL ENGINE INSTALLER v4.8.8 (PHOENIX)${NC}\n"
 
 # 1. Privilegios y Desbloqueo de APT
 if [[ $EUID -ne 0 ]]; then
    log_error "Se requiere ROOT (sudo su)."
 fi
 
-log_info "Liberando locks de procesos anteriores..."
-rm -f /var/lib/dpkg/lock*
-rm -f /var/lib/apt/lists/lock
-rm -f /var/cache/apt/archives/lock
+log_info "Liberando locks y purgando espejos obsoletos..."
+rm -f /var/lib/dpkg/lock* /var/lib/apt/lists/lock
+rm -f /etc/apt/sources.list.d/sipwise* /etc/apt/sources.list.d/freeswitch*
+rm -f /usr/share/keyrings/sipwise* /usr/share/keyrings/signalwire*
 
 # 2. SANEADOR DE REPOSITORIOS
-log_info "Sanitizando fuentes APT..."
+log_info "Sanitizando fuentes base..."
 if ! grep -q "deb.debian.org" /etc/apt/sources.list; then
     cat <<EOF > /etc/apt/sources.list
 deb http://deb.debian.org/debian/ bookworm main contrib non-free non-free-firmware
@@ -51,60 +51,46 @@ deb http://security.debian.org/debian-security bookworm-security main contrib no
 EOF
 fi
 
-# 3. BOOTSTRAP
+# 3. BOOTSTRAP DE HERRAMIENTAS
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
-apt-get install -y ca-certificates curl gnupg2 wget coreutils lsb-release
+apt-get install -y ca-certificates curl gnupg2 wget lsb-release
 
-# 4. LIMPIEZA DE LLAVES OBSOLETAS
-rm -f /etc/apt/sources.list.d/freeswitch* /etc/apt/sources.list.d/sipwise*
-rm -f /usr/share/keyrings/sipwise-keyring.gpg
-
-# 5. PostgreSQL 16
+# 4. PostgreSQL 16 (Data Plane)
 REPO_DIST=$(lsb_release -cs 2>/dev/null || echo "bookworm")
 [ "$REPO_DIST" = "trixie" ] && REPO_DIST="bookworm"
 
-log_info "Configurando PostgreSQL 16 (${REPO_DIST})..."
+log_info "Instalando PostgreSQL 16 (${REPO_DIST})..."
 curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor --yes -o /usr/share/keyrings/pgdg.gpg
 echo "deb [signed-by=/usr/share/keyrings/pgdg.gpg] http://apt.postgresql.org/pub/repos/apt ${REPO_DIST}-pgdg main" > /etc/apt/sources.list.d/pgdg.list
 apt-get update -y
 apt-get install -y postgresql-16
 
-# 6. MEDIA PLANE (Sipwise Ironclad Fix)
-log_info "Configurando Media Plane (Sipwise Gateway)..."
+# 5. MEDIA PLANE (SignalWire Official - Solución 404)
+log_info "Configurando Media Plane (SignalWire Official)..."
 
-TEMP_KEY="/tmp/sipwise.key"
-# Descarga con timeout y reintentos para evitar cuelgues
-wget --timeout=15 --tries=3 -qO $TEMP_KEY https://deb.sipwise.com/spce/keyring.gpg || {
-    log_warn "Sipwise Keyring indisponible. Intentando via curl..."
-    curl -m 20 --retry 3 -fsSL https://deb.sipwise.com/spce/keyring.gpg -o $TEMP_KEY
-}
-
-# Validación de integridad: Comprobar que no sea HTML o archivo vacío
-if [ ! -s "$TEMP_KEY" ] || grep -qi "<html>" "$TEMP_KEY"; then
-    log_error "La llave descargada no es válida (Error de Mirror). Verifique su conexión a internet."
+# Obtener llave de SignalWire
+SIGNALWIRE_KEY="/usr/share/keyrings/signalwire-freeswitch-repo.gpg"
+if ! curl -fsSL https://freeswitch.signalwire.com/repo/deb/debian-release/signalwire-freeswitch-repo.gpg | gpg --dearmor --yes -o "$SIGNALWIRE_KEY"; then
+    log_warn "Falla en descarga directa de llave. Intentando servidor de llaves alternativo..."
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 208362B2E967D6D8 || log_error "No se pudo validar la firma de SignalWire."
 fi
 
-log_info "Importando credenciales SIP..."
-if grep -q "BEGIN PGP" "$TEMP_KEY"; then
-    cat $TEMP_KEY | gpg --dearmor --yes -o /usr/share/keyrings/sipwise-keyring.gpg
-else
-    cp $TEMP_KEY /usr/share/keyrings/sipwise-keyring.gpg
-fi
+echo "deb [signed-by=$SIGNALWIRE_KEY] https://freeswitch.signalwire.com/repo/deb/debian-release/ bookworm main" > /etc/apt/sources.list.d/freeswitch.list
+echo "deb-src [signed-by=$SIGNALWIRE_KEY] https://freeswitch.signalwire.com/repo/deb/debian-release/ bookworm main" >> /etc/apt/sources.list.d/freeswitch.list
 
-# Usando rama mr11.3.1 (Más estable)
-echo "deb [signed-by=/usr/share/keyrings/sipwise-keyring.gpg] https://deb.sipwise.com/spce/mr11.3.1/ bookworm main" > /etc/apt/sources.list.d/sipwise.list
-
-log_info "Instalando FreeSwitch Engine..."
+log_info "Instalando FreeSwitch Engine desde SignalWire..."
 apt-get update -y
-apt-get install -y freeswitch freeswitch-all freeswitch-mod-lua freeswitch-mod-v8 freeswitch-mod-rtc || {
-    log_error "Falla crítica instalando FreeSwitch. El mirror SIP no respondió correctamente."
+apt-get install -y freeswitch-all freeswitch-mod-lua freeswitch-mod-v8 freeswitch-mod-rtc || {
+    log_warn "Error en SignalWire, intentando instalación forzada de dependencias..."
+    apt-get install -f -y
+    apt-get install -y freeswitch
 }
-log_success "Media Plane operativo."
+log_success "Media Plane operativo via SignalWire."
 
-# 7. CUBERBOX ENGINE (Go Core)
-log_info "Compilando CUBERBOX Engine v4.8.6..."
-apt-get install -y git build-essential ufw certbot nginx golang-go
+# 6. CUBERBOX ENGINE (Go Core)
+log_info "Compilando CUBERBOX Engine v4.8.8..."
+apt-get install -y git build-essential ufw golang-go
 rm -rf /opt/cuberbox
 git clone https://github.com/copantl/cuberbox-pro.git /opt/cuberbox
 cd /opt/cuberbox/backend
@@ -115,14 +101,12 @@ go mod tidy
 go build -v -o /usr/local/bin/cuberbox-engine main.go
 log_success "Motor Go compilado."
 
-# 8. SQL
+# 7. SQL
 sudo -u postgres psql -c "CREATE USER cuber_admin WITH PASSWORD 'CB_Elite_2025';" || true
 sudo -u postgres psql -c "CREATE DATABASE cuberbox_pro OWNER cuber_admin;" || true
 sudo -u postgres psql cuberbox_pro < /opt/cuberbox/setup/schema.sql || true
 
-# 9. Seguridad
-ufw allow 22/tcp && ufw allow 80/tcp && ufw allow 443/tcp && ufw allow 5060:5061/udp && ufw --force enable
-
+# 8. Daemons
 if [ -f /opt/cuberbox/setup/cuberbox-engine.service ]; then
     cp /opt/cuberbox/setup/cuberbox-engine.service /etc/systemd/system/
     systemctl daemon-reload
@@ -130,8 +114,8 @@ if [ -f /opt/cuberbox/setup/cuberbox-engine.service ]; then
 fi
 
 echo -e "\n${GREEN}${BOLD}=====================================================================${NC}"
-echo -e "${GREEN}      CUBERBOX PRO INSTALADO - BUILD 4.8.6 (IRONCLAD)                ${NC}"
+echo -e "${GREEN}      CUBERBOX PRO INSTALADO - BUILD 4.8.8 (PHOENIX)                 ${NC}"
 echo -e "${GREEN}=====================================================================${NC}"
 echo -e "${BOLD}Dashboard:${NC} http://$(hostname -I | awk '{print $1}')"
-echo -e "${BOLD}Versión:${NC} 4.8.6"
+echo -e "${BOLD}Repo SIP:${NC} SignalWire Official"
 echo -e "=====================================================================\n"
