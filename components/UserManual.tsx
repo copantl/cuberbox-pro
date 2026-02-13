@@ -30,16 +30,16 @@ const MANUAL_DATABASE: ManualEntry[] = [
   // --- INSTALACIÓN ---
   {
     id: 'inst-01',
-    title: 'Despliegue Flash (Phoenix Build)',
+    title: 'Despliegue Flash (Revolution Build)',
     icon: Zap,
     category: 'INSTALACIÓN',
-    summary: 'Procedimiento estándar para desplegar CUBERBOX ELITE utilizando los repositorios oficiales de SignalWire para máxima disponibilidad.',
+    summary: 'Procedimiento estándar para desplegar CUBERBOX ELITE utilizando exclusivamente el canal oficial de SignalWire, garantizando disponibilidad 24/7.',
     steps: [
       { title: 'Conexión SSH', desc: 'Acceda a su terminal como usuario Root.' },
-      { title: 'Ejecutar Instalador Phoenix', desc: 'El script V4.8.8 migra automáticamente el Media Plane a SignalWire, evitando los errores 404 de mirrors de terceros.', code: 'wget -O install.sh https://raw.githubusercontent.com/copantl/cuberbox-pro/main/setup/install.sh && chmod +x install.sh && sudo ./install.sh' },
-      { title: 'Verificación de Daemons', desc: 'El script activará freeswitch y el motor neuronal Go vinculando las firmas oficiales de Debian Release.' }
+      { title: 'Ejecutar Instalador Revolution', desc: 'El script V4.8.9 purga rastros de Sipwise e instala FreeSwitch desde SignalWire con inyección de llaves redundante.', code: 'wget -O install.sh https://raw.githubusercontent.com/copantl/cuberbox-pro/main/setup/install.sh && chmod +x install.sh && sudo ./install.sh' },
+      { title: 'Verificación de Daemons', desc: 'El script activará freeswitch y el motor neuronal Go vinculando las firmas oficiales de SignalWire.' }
     ],
-    technicalNote: 'La versión 4.8.8 soluciona definitivamente el error "Package not found" al conectar con la fuente primaria de FreeSwitch administrada por SignalWire.',
+    technicalNote: 'La versión 4.8.9 elimina el error 404 al omitir mirrors de terceros y conectar directamente con el repositorio maestro de FreeSwitch.',
     compliance: 'ISO/IEC 27001: Logs de instalación protegidos vía SHA-256 en /var/log/cuberbox_install.log.'
   },
   {
@@ -253,7 +253,7 @@ const UserManual: React.FC = () => {
                          </p>
                          <div className="flex items-center space-x-2 pt-4 border-t border-slate-800">
                             <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]"></div>
-                            <span className="text-[10px] font-black text-emerald-500 uppercase">Verificado v4.8.8</span>
+                            <span className="text-[10px] font-black text-emerald-500 uppercase">Verificado v4.8.9</span>
                          </div>
                       </div>
                    </div>
