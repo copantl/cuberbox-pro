@@ -1,112 +1,119 @@
-
 #!/bin/bash
 
 # =============================================================================
-# CUBERBOX PRO - NEURAL ENGINE CLUSTER INSTALLER V4.0
-# Compatible con Debian 12 (Bookworm) y Debian 13 (Trixie)
+# CUBERBOX PRO - MASTER CLUSTER INSTALLER V4.6.5 (STABLE)
+# Compatible: Debian 12 (Bookworm) / Debian 13 (Trixie)
+# Repo: https://github.com/copantl/cuberbox-pro
 # =============================================================================
 
 set -e
 
 # Estética de Terminal
+BOLD='\033[1m'
 BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+NC='\033[0m'
+
+function log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
+function log_success() { echo -e "${GREEN}[OK]${NC} $1"; }
+function log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+function log_error() { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
 
 clear
-echo -e "${PURPLE}=====================================================================${NC}"
-echo -e "${PURPLE}          CUBERBOX PRO - INSTALADOR DE CLÚSTER NEURONAL              ${NC}"
-echo -e "${PURPLE}=====================================================================${NC}"
+echo -e "${BOLD}${CYAN}"
+echo "   ____________   __________  ____  _  __"
+echo "  / ____/ / / / __ ) / ____/ __ \/ __ )| |/ /"
+echo " / /   / / / / __  |/ __/ / /_/ / __  ||   / "
+echo "/ /___/ /_/ / /_/ / /___/ _, _/ /_/ / /   |  "
+echo "\____/\____/_____/_____/_/ |_/_____/_/|_|  "
+echo -e "      NEURAL ENGINE INSTALLER v4.6.5${NC}\n"
 
-# 1. Privilegios y Pre-vuelo
-if [ "$EUID" -ne 0 ]; then 
-  echo -e "${RED}Error: Se requiere acceso Root para configurar el stack SIP.${NC}"
-  exit 1
+# 1. Verificación de Root
+if [[ $EUID -ne 0 ]]; then
+   log_error "Este script debe ejecutarse como ROOT (sudo su)."
 fi
 
-OS_VERSION=$(lsb_release -cs)
-echo -e "${GREEN}[OK] Preparando entorno para Debian ${OS_VERSION}${NC}"
-
-# 2. Dependencias de Compilación y Go
-echo -e "${YELLOW}Instalando entorno de ejecución Go 1.22+ y herramientas C...${NC}"
+# 2. Pre-vuelo del Sistema
+OS_CODENAME=$(lsb_release -cs)
+log_info "Detectado Debian ${OS_CODENAME}. Preparando dependencias..."
 apt update && apt upgrade -y
-apt install -y git curl wget build-essential golang-go gnupg2 lsb-release certbot nginx ufw
+apt install -y curl wget git gnupg2 software-properties-common lsb-release build-essential ufw certbot nginx golang-go
 
-# 3. Instalación de PostgreSQL 16 (Data Plane)
-echo -e "${YELLOW}Configurando Repositorios PGDG para PostgreSQL 16...${NC}"
-curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg
-echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg] http://apt.postgresql.org/pub/repos/apt ${OS_VERSION}-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+# 3. PostgreSQL 16 (Data Plane)
+log_info "Configurando PostgreSQL 16..."
+# En Debian 13, usamos el repo de sid/testing si es necesario, pero PGDG es preferible
+sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
 apt update && apt install -y postgresql-16
+log_success "PostgreSQL 16 instalado."
 
-# 4. Compilación del Neural Bridge (Go Orquestrator)
-echo -e "${YELLOW}Compilando CUBERBOX Neural Orquestrator (Control Plane)...${NC}"
-# El repositorio ahora es cuberbox-pro-neural
-git clone https://github.com/cuberbox/cuberbox-pro-neural.git /opt/cuberbox/backend
-mkdir -p /opt/cuberbox/bin
+# 4. Clonación del Repositorio Core
+log_info "Sincronizando código fuente desde GitHub..."
+rm -rf /opt/cuberbox
+git clone https://github.com/copantl/cuberbox-pro.git /opt/cuberbox
+log_success "Repositorio clonado en /opt/cuberbox"
+
+# 5. Compilación del Backend (Go Neural Engine)
+log_info "Construyendo binarios de orquestación..."
 cd /opt/cuberbox/backend
+
+# REPARACIÓN DE GO: Inicializar módulo si no existe
+if [ ! -f go.mod ]; then
+    log_info "Inicializando Go Module..."
+    go mod init github.com/copantl/cuberbox-pro/backend
+fi
+
+log_info "Descargando dependencias de Go..."
 go mod tidy
-go build -o /opt/cuberbox/bin/cuberbox-engine main.go
-chmod +x /opt/cuberbox/bin/cuberbox-engine
+log_info "Compilando CUBERBOX Engine..."
+go build -o /usr/local/bin/cuberbox-engine main.go
+log_success "Backend compilado con éxito."
 
-# 5. Instalación de FreeSwitch 1.10 (Media Plane)
-echo -e "${YELLOW}Configurando Stack de Telefonía FreeSwitch...${NC}"
+# 6. FreeSwitch 1.10 (Media Plane)
+log_info "Configurando FreeSwitch (SignalWire Repo)..."
+# Nota: Para Debian 13, a veces se requiere forzar el repo de bullseye/bookworm si no hay release oficial aún
+FS_REPO_DIST="bookworm" # Estable por defecto para compatibilidad
 wget -O - https://files.freeswitch.org/repo/deb/debian-release/fs18-release.asc | apt-key add -
-echo "deb http://files.freeswitch.org/repo/deb/debian-release/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/freeswitch.list
-apt update
-apt install -y freeswitch-all freeswitch-mod-rtc freeswitch-mod-v8 freeswitch-mod-tts-commandline freeswitch-mod-lua
+echo "deb http://files.freeswitch.org/repo/deb/debian-release/ ${FS_REPO_DIST} main" > /etc/apt/sources.list.d/freeswitch.list
+apt update && apt install -y freeswitch-all freeswitch-mod-lua freeswitch-mod-v8 freeswitch-mod-rtc
 
-# 6. Despliegue de Lógica Lua y Hooks
-echo -e "${YELLOW}Inyectando hooks de telemetría en el dialplan...${NC}"
-# Asumiendo que el archivo está en el repositorio backend o core
-cp /opt/cuberbox/backend/setup/cuberbox_router.lua /usr/share/freeswitch/scripts/
-chown freeswitch:freeswitch /usr/share/freeswitch/scripts/cuberbox_router.lua
-
-# 7. Configuración de Servicio SystemD para Go Bridge
-echo -e "${YELLOW}Configurando persistencia del motor neuronal...${NC}"
-cat <<EOT > /etc/systemd/system/cuberbox-engine.service
-[Unit]
-Description=Cuberbox Neural Bridge Service
-After=network.target postgresql.service freeswitch.service
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/opt/cuberbox
-EnvironmentFile=/etc/cuberbox/engine.env
-ExecStart=/opt/cuberbox/bin/cuberbox-engine
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-EOT
-
-# 8. Firewall L7 Hardening
-echo -e "${YELLOW}Aplicando políticas de blindaje de red...${NC}"
+# 7. Seguridad perimetral
+log_info "Aplicando blindaje de red (UFW)..."
 ufw allow 22/tcp
 ufw allow 80/tcp
 ufw allow 443/tcp
-ufw allow 5060:5061/tcp
 ufw allow 5060:5061/udp
 ufw allow 16384:32768/udp
 ufw allow 7443/tcp
 ufw --force enable
+log_success "Firewall configurado."
 
-# 9. Inicialización de DB
-echo -e "${YELLOW}Inyectando esquema de base de datos...${NC}"
-sudo -u postgres psql -c "CREATE USER cuber_master WITH PASSWORD 'CB_Secret_2025';" || true
-sudo -u postgres psql -c "CREATE DATABASE cuberbox_pro OWNER cuber_master;" || true
-# El esquema ahora se obtiene de cuberbox-pro-core o similar
-sudo -u postgres psql cuberbox_pro < /opt/cuberbox/backend/setup/schema.sql
+# 8. Base de Datos & Esquema
+log_info "Inyectando esquema de datos Q4..."
+sudo -u postgres psql -c "CREATE USER cuber_admin WITH PASSWORD 'CB_Elite_2025';" || log_warn "Usuario ya existe."
+sudo -u postgres psql -c "CREATE DATABASE cuberbox_pro OWNER cuber_admin;" || log_warn "Base de datos ya existe."
+sudo -u postgres psql cuberbox_pro < /opt/cuberbox/setup/schema.sql
+log_success "Esquema V4 inyectado."
 
-# 10. Finalización
-systemctl daemon-reload
-echo -e "${BLUE}=====================================================================${NC}"
-echo -e "${GREEN}      CUBERBOX PRO CLUSTER DEPLOYED SUCCESSFULLY ON DEBIAN          ${NC}"
-echo -e "${BLUE}=====================================================================${NC}"
-echo -e "Nodos activos detectados. Configura tu API_KEY en /etc/cuberbox/engine.env"
-echo -e "y ejecuta: systemctl enable --now cuberbox-engine"
-echo -e "${BLUE}=====================================================================${NC}"
+# 9. Persistencia de Servicios
+log_info "Registrando Daemons de sistema..."
+if [ -f /opt/cuberbox/setup/cuberbox-engine.service ]; then
+    cp /opt/cuberbox/setup/cuberbox-engine.service /etc/systemd/system/
+    systemctl daemon-reload
+    systemctl enable cuberbox-engine
+    log_success "Servicio registrado."
+else
+    log_warn "Archivo .service no encontrado. Creación manual requerida."
+fi
+
+echo -e "\n${GREEN}${BOLD}=====================================================================${NC}"
+echo -e "${GREEN}      CUBERBOX PRO DESPLEGADO EXITOSAMENTE (DEBIAN 12/13)            ${NC}"
+echo -e "${GREEN}=====================================================================${NC}"
+echo -e "${BOLD}Siguientes pasos:${NC}"
+echo -e "1. Accede vía IP: ${CYAN}http://$(hostname -I | awk '{print $1}')${NC}"
+echo -e "2. Completa el Wizard visual para activar tu API KEY de Gemini."
+echo -e "3. Repositorio Oficial: https://github.com/copantl/cuberbox-pro"
+echo -e "=====================================================================\n"

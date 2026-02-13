@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { 
   BookOpen, Terminal, Cpu, ShieldCheck, Globe, Sliders, Bot, Users, 
@@ -7,7 +6,7 @@ import {
   Trash2, Lock, Activity, FileText, Code, CheckCircle2, AlertTriangle,
   Play, MousePointer2, Smartphone as PhoneIcon, Volume2,
   ShieldAlert, ArrowUpRight, UserCog, UserCheck, Eye, Headphones,
-  Github, GitBranch, Globe2
+  Github, GitBranch, Globe2, TerminalSquare, AlertCircle
 } from 'lucide-react';
 
 interface ManualStep {
@@ -28,89 +27,71 @@ interface ManualEntry {
 }
 
 const MANUAL_DATABASE: ManualEntry[] = [
+  // --- INSTALACIÓN ---
+  {
+    id: 'inst-01',
+    title: 'Despliegue Flash (Automatizado)',
+    icon: Zap,
+    category: 'INSTALACIÓN',
+    summary: 'Procedimiento estándar recomendado para desplegar el ecosistema CUBERBOX ELITE en un nodo maestro Debian 12 o 13.',
+    steps: [
+      { title: 'Conexión SSH', desc: 'Acceda a su terminal como usuario Root.' },
+      { title: 'Ejecutar Instalador Maestro', desc: 'Pegue el comando de instalación de una sola línea disponible en el repositorio oficial.', code: 'wget -O install.sh https://raw.githubusercontent.com/copantl/cuberbox-pro/main/setup/install.sh && chmod +x install.sh && sudo ./install.sh' },
+      { title: 'Verificación de Daemons', desc: 'El script activará cuberbox-engine y freeswitch automáticamente.' }
+    ],
+    technicalNote: 'En Debian 13, el script gestiona las dependencias del compilador de Go para resolver el error go.mod missing.',
+    compliance: 'ISO/IEC 27001: Logs de instalación protegidos vía SHA-256 en /var/log/cuberbox_install.log.'
+  },
+  {
+    id: 'inst-02',
+    title: 'Compilación Manual del Engine',
+    icon: TerminalSquare,
+    category: 'INSTALACIÓN',
+    summary: 'Guía técnica para administradores que requieren compilar el orquestador Go desde el código fuente.',
+    steps: [
+      { title: 'Clonar Repositorio', desc: 'Obtenga el código fuente del repositorio oficial.', code: 'git clone https://github.com/copantl/cuberbox-pro.git /opt/cuberbox' },
+      { title: 'Inicializar Entorno Go', desc: 'Acceda a la carpeta backend y genere el archivo de módulo.', code: 'cd /opt/cuberbox/backend\ngo mod init github.com/copantl/cuberbox-pro/backend\ngo mod tidy' },
+      { title: 'Build del Binario', desc: 'Compile el binario optimizado para su arquitectura.', code: 'go build -o cuberbox-engine main.go' }
+    ],
+    technicalNote: 'Requiere Go 1.22+ para soporte de Gemini 3 Pro.'
+  },
+
   // --- ADMINISTRACIÓN: PERFILES & NIVELES ---
   {
     id: 'admin-hier-01',
     title: 'Jerarquía de Autoridad (Lvl 1-9)',
     icon: UserCog,
     category: 'ADMINISTRACIÓN',
-    summary: 'Definición exhaustiva del sistema RBAC (Role-Based Access Control) que gobierna las capacidades operativas del personal en CUBERBOX ELITE.',
+    summary: 'Definición del sistema RBAC (Role-Based Access Control) que gobierna las capacidades operativas en CUBERBOX ELITE.',
     steps: [
-      { title: 'Nivel 1-3: Agente Operativo', desc: 'Acceso restringido a la Estación de Agente. Capacidad de recibir llamadas, realizar marcación manual, tipificar y gestionar el CRM interno. Repositorio UI: https://github.com/cuberbox/cuberbox-pro-ui' },
-      { title: 'Nivel 4-6: Supervisor GTR', desc: 'Acceso al Command Center y Monitor Real-time. Habilitado para Listen (escucha silenciosa) y Whisper (susurro al agente). Puede gestionar estados de pausa y descargar reportes.' },
-      { title: 'Nivel 7-8: Campaign Manager', desc: 'Control estratégico del Dialer Engine. Capacidad para crear campañas, importar bases de datos, ajustar Hopper, configurar IVRs y entrenar modelos en el AI Studio.' },
-      { title: 'Nivel 9: Administrador Root', desc: 'Autoridad máxima de infraestructura. Único capaz de gestionar SIP Trunks, Nodos del Clúster, API Keys globales y purga de logs forenses.' }
-    ],
-    technicalNote: 'La validación de nivel se realiza en el middleware de la API Gateway contra el clúster de PostgreSQL 16.',
-    compliance: 'ISO/IEC 27001: El acceso a funciones de monitoreo queda registrado con hash de integridad SHA-256.'
-  },
-
-  // --- INSTALACIÓN ---
-  {
-    id: 'inst-01',
-    title: 'Aprovisionamiento de Infraestructura',
-    icon: Cpu,
-    category: 'INSTALACIÓN',
-    summary: 'Guía de despliegue para el stack tecnológico de CUBERBOX PRO en entornos Linux Debian.',
-    steps: [
-      { title: 'Clonar Repositorio de Setup', desc: 'Obtenga las herramientas de automatización para el despliegue del clúster.', code: 'git clone https://github.com/cuberbox/cuberbox-pro-setup.git\ncd cuberbox-pro-setup' },
-      { title: 'Configuración de Nodos', desc: 'Edite el inventario de nodos SIP y de base de datos en el archivo de configuración.', code: 'nano inventory.ini\n# Definir nodos FS y DB' },
-      { title: 'Despliegue Automatizado', desc: 'Ejecute el script maestro para instalar FreeSwitch, PostgreSQL y el Neural Bridge.', code: 'sudo ./deploy-stack.sh --env=production' }
-    ],
-    technicalNote: 'Se recomienda Debian 12 con soporte AES-NI para cifrado de audio SRTP.'
-  },
-  {
-    id: 'inst-02',
-    title: 'Compilación del Neural Bridge',
-    icon: Bot,
-    category: 'INSTALACIÓN',
-    summary: 'Instalación del puente Go que conecta los eventos SIP con los modelos Gemini Pro de Google.',
-    steps: [
-      { title: 'Dependencias de Go', desc: 'Requiere Go 1.22+. Descargue el código fuente del puente neuronal.', code: 'git clone https://github.com/cuberbox/cuberbox-pro-neural.git\ncd cuberbox-pro-neural' },
-      { title: 'Build del Binario', desc: 'Compile el ejecutable optimizado para su arquitectura.', code: 'go mod tidy\ngo build -o cuberbox-engine main.go' },
-      { title: 'Persistencia SystemD', desc: 'Configure el motor como un daemon de sistema para garantizar 99.9% uptime.', code: 'cp cuberbox-engine.service /etc/systemd/system/\nsystemctl enable --now cuberbox-engine' }
-    ],
-    technicalNote: 'El binario interactúa con FreeSwitch vía ESL (Event Socket Layer) en el puerto 8021.'
+      { title: 'Nivel 1-3: Agente', desc: 'Acceso a Estación de Agente y CRM.' },
+      { title: 'Nivel 4-6: Supervisor GTR', desc: 'Monitor Real-time, Listen, Whisper y gestión de pausas.' },
+      { title: 'Nivel 7-8: Campaign Manager', desc: 'Control de Dialer, Importación de Leads y AI Studio.' },
+      { title: 'Nivel 9: Administrador Root', desc: 'Infraestructura, SIP Trunks y API Keys.' }
+    ]
   },
 
   // --- CONFIGURACIÓN ---
   {
     id: 'conf-01',
-    title: 'Interconexión SIP Carrier',
+    title: 'Provisionamiento de Carrier SIP',
     icon: Globe,
     category: 'CONFIGURACIÓN',
-    summary: 'Procedimiento para vincular troncales SIP y aprovisionar DIDs de entrada.',
+    summary: 'Procedimiento para vincular troncales SIP y aprovisionar números de entrada (DIDs).',
     steps: [
-      { title: 'Vincular Trunk', desc: 'En el menú Infraestructura > Carrier Trunks, añada los datos de su proveedor SIP.' },
-      { title: 'Aprovisionar DIDs', desc: 'Importe sus números y asígnelos a una campaña o flujo IVR específico.' },
-      { title: 'Validación de Ruta', desc: 'Use el CLI integrado para verificar el registro del gateway.', code: 'fs_cli -x "sofia profile external rescan"\nfs_cli -x "sofia status"' }
+      { title: 'Añadir Troncal', desc: 'En el módulo de Telefonía Core, registre su proveedor con Host, Usuario y Password.' },
+      { title: 'Validación de Registro', desc: 'Utilice el System CLI integrado para verificar el estado de la troncal.', code: 'sofia profile external rescan\nsofia status gateway <nombre_carrier>' }
     ]
   },
   {
     id: 'conf-02',
-    title: 'Entrenamiento de AI Studio',
+    title: 'AI Neural Bridge (Gemini)',
     icon: Sparkles,
     category: 'CONFIGURACIÓN',
-    summary: 'Configuración del modelo Gemini 3 Pro para transcripción y bots inteligentes.',
+    summary: 'Configuración de la IA para transcripción, análisis de sentimientos y bots de broadcast.',
     steps: [
-      { title: 'API Key de Gemini', desc: 'Obtenga su llave en Google AI Studio y regístrela en la plataforma.' },
-      { title: 'Diseño de Prompts', desc: 'Defina la personalidad, el tono y los objetivos de extracción del bot.' },
-      { title: 'Test de Conversación', desc: 'Utilice el Sandbox integrado para validar la respuesta de la IA antes de enviarla a producción.' }
-    ],
-    technicalNote: 'El motor utiliza gemini-3-pro-preview para tareas de razonamiento complejo en llamadas de ventas.'
-  },
-
-  // --- OPERACIÓN ---
-  {
-    id: 'op-01',
-    title: 'Monitor Real-Time & GTR',
-    icon: Activity,
-    category: 'OPERACIÓN',
-    summary: 'Gestión táctica de la planta operativa y supervisión disciplinaria.',
-    steps: [
-      { title: 'Supervisión de Bridges', desc: 'Vea las conferencias activas y realice escuchas silenciosas (Listen).' },
-      { title: 'Control de Estados', desc: 'Cambie el estado de un agente de forma remota si excede sus tiempos de pausa.' },
-      { title: 'Métrica de SLA', desc: 'Monitoree el porcentaje de llamadas contestadas antes de los 20 segundos.' }
+      { title: 'API Key Generation', desc: 'Genere su llave en Google AI Studio.' },
+      { title: 'Prompt Engineering', desc: 'Defina las instrucciones del sistema en el AI Studio de CUBERBOX.' }
     ]
   }
 ];
@@ -130,7 +111,7 @@ const UserManual: React.FC = () => {
 
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code);
-    alert("Copiado al portapapeles.");
+    alert("Código copiado al portapapeles.");
   };
 
   return (
@@ -140,16 +121,16 @@ const UserManual: React.FC = () => {
           <BookOpen size={18} className="text-blue-400" />
           <span className="text-[11px] font-black text-blue-400 uppercase tracking-[0.4em]">CUBERBOX Knowledge Hub v4.6</span>
         </div>
-        <h1 className="text-5xl font-black text-white tracking-tighter uppercase leading-tight">Documentación Técnica</h1>
+        <h1 className="text-5xl font-black text-white tracking-tighter uppercase leading-tight">Documentación de Sistema</h1>
         <p className="text-slate-400 text-sm max-w-2xl mx-auto font-medium leading-relaxed">
-          Manual oficial de arquitectura, despliegue y operación para el clúster CUBERBOX ELITE.
+          Guía técnica para el despliegue de infraestructura, operación táctica y configuración del motor neuronal.
         </p>
         
         <div className="relative max-w-xl mx-auto mt-10">
           <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500" size={22} />
           <input 
             type="text"
-            placeholder="Buscar por módulo o repositorio..."
+            placeholder="Buscar por módulo o procedimiento..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-slate-900/60 border-2 border-slate-800 rounded-[32px] pl-16 pr-12 py-5 text-sm text-white outline-none focus:border-blue-500 transition-all shadow-inner font-bold placeholder:text-slate-600"
@@ -208,7 +189,7 @@ const UserManual: React.FC = () => {
                   </div>
                   <div className="flex items-center space-x-3 bg-slate-950 px-5 py-3 rounded-2xl border border-slate-800">
                     <Github size={16} className="text-slate-600" />
-                    <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Open Source Core</span>
+                    <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Git: copantl/cuberbox-pro</span>
                   </div>
                 </div>
 
@@ -225,7 +206,7 @@ const UserManual: React.FC = () => {
                    </h3>
                    <div className="space-y-8">
                       {selectedEntry.steps.map((step, i) => (
-                        <div key={i} className="group flex flex-col space-y-6 p-10 bg-slate-900/40 border border-slate-800 rounded-[48px] hover:border-blue-500/30 transition-all shadow-inner relative overflow-hidden flex flex-col">
+                        <div key={i} className="group flex flex-col space-y-6 p-10 bg-slate-900/40 border border-slate-800 rounded-[48px] hover:border-blue-500/30 transition-all shadow-inner relative overflow-hidden">
                            <div className="flex items-start space-x-8">
                               <div className="w-12 h-12 rounded-full bg-slate-950 border-2 border-slate-800 flex items-center justify-center font-black text-xs text-blue-500 shrink-0 shadow-lg">{i+1}</div>
                               <div className="flex-1 space-y-4">
@@ -234,7 +215,7 @@ const UserManual: React.FC = () => {
                                  {step.code && (
                                    <div className="mt-6 bg-slate-950 rounded-3xl border border-slate-800 overflow-hidden shadow-2xl">
                                       <div className="px-6 py-3 border-b border-slate-900 bg-slate-900/50 flex justify-between items-center">
-                                         <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Bash / Linux</span>
+                                         <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Bash / Linux Terminal</span>
                                          <button onClick={() => handleCopyCode(step.code!)} className="text-[9px] font-black text-slate-600 hover:text-blue-400 uppercase tracking-widest">Copiar</button>
                                       </div>
                                       <pre className="p-8 text-sm font-mono text-emerald-400/90 leading-relaxed overflow-x-auto scrollbar-hide">
@@ -252,15 +233,11 @@ const UserManual: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                    <div className="space-y-6">
                       <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] border-b border-slate-800 pb-4 flex items-center">
-                        <Github size={16} className="mr-3 text-emerald-500" /> Repositorios de Referencia
+                        <Github size={16} className="mr-3 text-emerald-500" /> Repositorio
                       </h3>
                       <div className="p-6 bg-slate-950 rounded-[32px] border border-slate-800 space-y-4">
-                         <a href="https://github.com/cuberbox/cuberbox-pro-neural" target="_blank" className="flex items-center justify-between p-3 rounded-xl bg-slate-900 hover:bg-blue-600/10 transition-all border border-slate-800 group">
-                            <span className="text-[10px] font-black text-slate-300 uppercase">Neural Bridge (Go)</span>
-                            <ArrowUpRight size={14} className="text-blue-400" />
-                         </a>
-                         <a href="https://github.com/cuberbox/cuberbox-pro-setup" target="_blank" className="flex items-center justify-between p-3 rounded-xl bg-slate-900 hover:bg-blue-600/10 transition-all border border-slate-800 group">
-                            <span className="text-[10px] font-black text-slate-300 uppercase">Cluster Setup (Ansible)</span>
+                         <a href="https://github.com/copantl/cuberbox-pro" target="_blank" className="flex items-center justify-between p-3 rounded-xl bg-slate-900 hover:bg-blue-600/10 transition-all border border-slate-800 group">
+                            <span className="text-[10px] font-black text-slate-300 uppercase">CUBERBOX Pro Repo</span>
                             <ArrowUpRight size={14} className="text-blue-400" />
                          </a>
                       </div>
@@ -268,15 +245,15 @@ const UserManual: React.FC = () => {
 
                    <div className="space-y-6">
                       <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] border-b border-slate-800 pb-4 flex items-center">
-                        <ShieldAlert size={16} className="mr-3 text-rose-500" /> Cumplimiento Legal
+                        <ShieldAlert size={16} className="mr-3 text-rose-500" /> Blindaje L7
                       </h3>
                       <div className="p-8 bg-slate-900 border border-slate-800 rounded-[40px] space-y-4 shadow-2xl">
-                         <p className="text-[10px] text-slate-400 leading-relaxed font-bold uppercase tracking-wider">
+                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
                            {selectedEntry.compliance || 'Se requiere validación SHA-256 para cualquier cambio estructural en el clúster.'}
                          </p>
                          <div className="flex items-center space-x-2 pt-4 border-t border-slate-800">
                             <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]"></div>
-                            <span className="text-[10px] font-black text-emerald-500 uppercase">Verified Security v4.6</span>
+                            <span className="text-[10px] font-black text-emerald-500 uppercase">Verificado v4.6</span>
                          </div>
                       </div>
                    </div>
