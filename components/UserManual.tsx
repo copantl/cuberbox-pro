@@ -36,10 +36,10 @@ const MANUAL_DATABASE: ManualEntry[] = [
     summary: 'Procedimiento estándar recomendado para desplegar el ecosistema CUBERBOX ELITE en un nodo maestro Debian 12 o 13.',
     steps: [
       { title: 'Conexión SSH', desc: 'Acceda a su terminal como usuario Root.' },
-      { title: 'Ejecutar Instalador Maestro', desc: 'Pegue el comando unificado. El script V4.8.0 gestiona el bypass de los repositorios 401 de SignalWire automáticamente.', code: 'wget -O install.sh https://raw.githubusercontent.com/copantl/cuberbox-pro/main/setup/install.sh && chmod +x install.sh && sudo ./install.sh' },
-      { title: 'Verificación de Daemons', desc: 'El script activará cuberbox-engine y freeswitch automáticamente usando el mirror de Sipwise.' }
+      { title: 'Ejecutar Instalador Maestro', desc: 'Pegue el comando unificado. El script V4.8.2 gestiona el bypass de los repositorios 401 y la integridad GPG automáticamente.', code: 'wget -O install.sh https://raw.githubusercontent.com/copantl/cuberbox-pro/main/setup/install.sh && chmod +x install.sh && sudo ./install.sh' },
+      { title: 'Verificación de Daemons', desc: 'El script activará cuberbox-engine y freeswitch automáticamente usando el mirror verificado de Sipwise.' }
     ],
-    technicalNote: 'Si SignalWire bloquea la descarga, el script utiliza Sipwise Gateway (Grado Telecom) para obtener FreeSwitch 1.10.',
+    technicalNote: 'La versión 4.8.2 incluye una capa de validación para evitar el error de datos OpenPGP no encontrados durante la importación de llaves.',
     compliance: 'ISO/IEC 27001: Logs de instalación protegidos vía SHA-256 en /var/log/cuberbox_install.log.'
   },
   {
@@ -119,7 +119,7 @@ const UserManual: React.FC = () => {
       <div className="text-center space-y-4">
         <div className="inline-flex items-center space-x-3 bg-blue-500/10 border border-blue-500/20 px-6 py-2.5 rounded-full mb-4">
           <BookOpen size={18} className="text-blue-400" />
-          <span className="text-[11px] font-black text-blue-400 uppercase tracking-[0.4em]">CUBERBOX Knowledge Hub v4.6</span>
+          <span className="text-[11px] font-black text-blue-400 uppercase tracking-[0.4em]">CUBERBOX Knowledge Hub v4.8</span>
         </div>
         <h1 className="text-5xl font-black text-white tracking-tighter uppercase leading-tight">Documentación de Sistema</h1>
         <p className="text-slate-400 text-sm max-w-2xl mx-auto font-medium leading-relaxed">
@@ -253,7 +253,7 @@ const UserManual: React.FC = () => {
                          </p>
                          <div className="flex items-center space-x-2 pt-4 border-t border-slate-800">
                             <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]"></div>
-                            <span className="text-[10px] font-black text-emerald-500 uppercase">Verificado v4.8.0</span>
+                            <span className="text-[10px] font-black text-emerald-500 uppercase">Verificado v4.8.2</span>
                          </div>
                       </div>
                    </div>
